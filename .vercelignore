@@ -2,5 +2,6 @@ __pycache__/
 venv/
 logs/
 Tile_Matching_Reports_*/
-uploads/*
+*.dxf
 exports/
+.git/

@@ -6,6 +6,13 @@ import base64
 import io
 import matplotlib
 matplotlib.use('Agg')
+import os
+if os.environ.get('VERCEL_ENV'):
+    # Ensure the matplotlib cache directory exists
+    os.environ['MPLCONFIGDIR'] = '/tmp/matplotlib'
+    import matplotlib.pyplot as plt
+    plt.switch_backend('Agg')
+    
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd

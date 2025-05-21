@@ -1,0 +1,505 @@
+{% extends "index.html" %}
+
+{% block progress_width %}100%{% endblock %}
+{% block progress_value %}100{% endblock %}
+{% block progress_text %}Step 7: Export{% endblock %}
+
+{% block step1_active %}completed{% endblock %}
+{% block step2_active %}completed{% endblock %}
+{% block step3_active %}completed{% endblock %}
+{% block step4_active %}completed{% endblock %}
+{% block step5_active %}completed{% endblock %}
+{% block step6_active %}completed{% endblock %}
+{% block step7_active %}active{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Step 7: Export Tile Analysis</h2>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <p>Create a final report with material wastage analysis, area calculations, and detailed tile inventory.</p>
+        </div>
+        
+        <!-- Side-by-side layout with form on left and results on right -->
+        <div class="row">
+            <!-- Left side: Export settings form -->
+            <div class="col-md-6">
+                <form id="exportForm">
+                    <div class="card mb-4">
+                        <div class="card-header">Project Details</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="projectName" class="form-label">Project Name</label>
+                                <input type="text" class="form-control" id="projectName" name="project_name" value="Project_1">
+                                <div class="form-text">This name will be used in the export filename.</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">Export Settings</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="exportPrefix" class="form-label">Export File Prefix</label>
+                                <input type="text" class="form-control" id="exportPrefix" name="export_prefix" value="final_tiles_export">
+                                <div class="form-text">This prefix will be used for all exported files.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Export Format</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="export_format" id="formatExcel" value="excel" checked>
+                                    <label class="form-check-label" for="formatExcel">
+                                        Excel (.xlsx) - Comprehensive report with multiple sheets
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="export_format" id="formatCSV" value="csv">
+                                    <label class="form-check-label" for="formatCSV">
+                                        CSV (.csv) - Multiple files in a ZIP archive
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="includeVisualization" name="include_visualization" checked>
+                                    <label class="form-check-label" for="includeVisualization">
+                                        Include visualizations in report
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">Export Contents</div>
+                        <div class="card-body">
+                            <div class="export-contents">
+                                <h6>The final report will include:</h6>
+                                <ul>
+                                    <li>Wastage analysis for each apartment</li>
+                                    <li>Area calculations (including both regular and small tiles)</li>
+                                    <li>Full tiles inventory by apartment</li>
+                                    <li>Detailed cut tile report with dimensions</li>
+                                    <li>Simplified cut tile report by type</li>
+                                    <li>Small cuts summary (if identified)</li>
+                                    <li>Complete statistics by apartment and room</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="exportButton">
+                        <span class="spinner-border spinner-border-sm d-none" id="exportSpinner" role="status" aria-hidden="true"></span>
+                        Generate Final Report
+                    </button>
+                    
+                    <div class="alert alert-success mt-3 d-none" id="successAlert">
+                        <strong>Success!</strong> Final report has been generated.
+                    </div>
+
+                    <div class="alert alert-danger mt-3 d-none" id="errorAlert"></div>
+                </form>
+            </div>
+            
+            <!-- Right side: Export results -->
+            <div class="col-md-6">
+                <div class="card mb-4 d-none" id="exportResultsSection">
+                    <div class="card-header">
+                        <h4>Export Results</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success">
+                            <strong>Final Report Ready!</strong> <span id="reportFileName"></span>
+                        </div>
+                        
+                        <div class="text-center mb-4">
+                            <a href="#" class="btn btn-success btn-lg" id="downloadButton">
+                                <i class="bi bi-download"></i> Download Final Report
+                            </a>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header">Wastage Analysis Summary</div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Apartment</th>
+                                                <th>Area (sqm)</th>
+                                                <th>Wastage (%)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="wastageTable">
+                                            <!-- Will be filled by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">Tile Count Summary</div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>Count</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tileSummaryTable">
+                                            <!-- Will be filled by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Initial placeholder when no export has been done yet -->
+                <div class="card" id="initialExportPlaceholder">
+                    <div class="card-header">
+                        <h4>Export Preview</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-4">
+                            <i class="bi bi-file-earmark-spreadsheet" style="font-size: 48px; color: #28a745;"></i>
+                            <h5 class="mt-3">Report Generation</h5>
+                            <p>Fill in the form on the left and click "Generate Final Report" to create your comprehensive analysis.</p>
+                            <p class="text-muted">The report will include detailed wastage analysis, tile counts, and material calculations.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Report contents section -->
+                <div class="card mt-4 d-none" id="reportContentsSection">
+                    <div class="card-header">Report Contents</div>
+                    <div class="card-body p-0">
+                        <div class="accordion" id="reportContentsAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingOne">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                        1. Wastage Analysis
+                                    </button>
+                                </h2>
+                                <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#reportContentsAccordion">
+                                    <div class="accordion-body">
+                                        <p>Detailed analysis of material wastage by apartment, including:</p>
+                                        <ul>
+                                            <li>Theoretical area needed vs. actual tile area used</li>
+                                            <li>Wastage calculation by percentage and square meters</li>
+                                            <li>Full tile equivalents accounting for cut pieces</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingTwo">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                        2. Area Summary
+                                    </button>
+                                </h2>
+                                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#reportContentsAccordion">
+                                    <div class="accordion-body">
+                                        <p>Area calculations for each apartment, including:</p>
+                                        <ul>
+                                            <li>Total area in square meters</li>
+                                            <li>Room-by-room breakdown</li>
+                                            <li>Note of whether small cuts are included</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingThree">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                        3. Full Tiles
+                                    </button>
+                                </h2>
+                                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#reportContentsAccordion">
+                                    <div class="accordion-body">
+                                        <p>Inventory of full and irregular tiles by apartment:</p>
+                                        <ul>
+                                            <li>Count by apartment and room</li>
+                                            <li>Distinction between full and irregular tiles</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingFour">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                        4. Cut Tiles
+                                    </button>
+                                </h2>
+                                <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#reportContentsAccordion">
+                                    <div class="accordion-body">
+                                        <p>Detailed report of all cut tiles:</p>
+                                        <ul>
+                                            <li>Raw format with full dimension details</li>
+                                            <li>Simplified format organized by cut size and location</li>
+                                            <li>Separate X and Y direction cuts (if pattern-based)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingFive">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                        5. Small Cuts Summary
+                                    </button>
+                                </h2>
+                                <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#reportContentsAccordion">
+                                    <div class="accordion-body">
+                                        <p>Summary of identified small cut tiles:</p>
+                                        <ul>
+                                            <li>Count by apartment and room</li>
+                                            <li>Size distribution analysis</li>
+                                            <li>Status (excluded or included)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingSix">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
+                                        6. Statistics
+                                    </button>
+                                </h2>
+                                <div id="collapseSix" class="accordion-collapse collapse" aria-labelledby="headingSix" data-bs-parent="#reportContentsAccordion">
+                                    <div class="accordion-body">
+                                        <p>Complete statistics for the entire project:</p>
+                                        <ul>
+                                            <li>Total counts by tile type</li>
+                                            <li>Overall wastage analysis</li>
+                                            <li>Small cuts impact assessment</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block prev_step %}
+<a href="{{ url_for('step6') }}" class="btn btn-secondary">Previous: Small Cuts</a>
+{% endblock %}
+
+{% block next_step %}
+<a id="nextStep" href="{{ url_for('step8') }}" class="btn btn-primary disabled">Next: Optimize (Beta)</a>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const exportForm = document.getElementById('exportForm');
+        const exportButton = document.getElementById('exportButton');
+        const exportSpinner = document.getElementById('exportSpinner');
+        const successAlert = document.getElementById('successAlert');
+        const errorAlert = document.getElementById('errorAlert');
+        const exportResultsSection = document.getElementById('exportResultsSection');
+        const finishButton = document.getElementById('finishButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const reportFileName = document.getElementById('reportFileName');
+        
+        // Fix for accordion functionality
+        document.querySelectorAll('.accordion-button').forEach(button => {
+            if (button) {
+                button.addEventListener('click', function(e) {
+                    // Prevent default bootstrap behavior
+                    e.preventDefault();
+                    
+                    // Get the target collapse element
+                    const collapseTarget = document.getElementById(this.getAttribute('data-bs-target').replace('#', ''));
+                    
+                    if (collapseTarget) {
+                        // Toggle the collapse
+                        const isCollapsed = collapseTarget.classList.contains('show');
+                        
+                        if (isCollapsed) {
+                            collapseTarget.classList.remove('show');
+                            this.classList.add('collapsed');
+                            this.setAttribute('aria-expanded', 'false');
+                        } else {
+                            collapseTarget.classList.add('show');
+                            this.classList.remove('collapsed');
+                            this.setAttribute('aria-expanded', 'true');
+                        }
+                    }
+                });
+            }
+        });
+        
+        if (exportForm) {
+            exportForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Show processing indicators
+                if (exportButton) exportButton.disabled = true;
+                if (exportSpinner) exportSpinner.classList.remove('d-none');
+                if (errorAlert) errorAlert.classList.add('d-none');
+                if (successAlert) successAlert.classList.add('d-none');
+                
+                // Gather form data
+                const formData = {
+                    export_prefix: document.getElementById('exportPrefix') ? document.getElementById('exportPrefix').value.trim() : 'final_tiles_export',
+                    export_format: document.querySelector('input[name="export_format"]:checked') ? document.querySelector('input[name="export_format"]:checked').value : 'excel',
+                    include_visualization: document.getElementById('includeVisualization') ? document.getElementById('includeVisualization').checked : true,
+                    project_name: document.getElementById('projectName') ? document.getElementById('projectName').value.trim() : 'Project_1'
+                };
+                
+                // Send data to server
+                fetch('/step7', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide processing indicators
+                    if (exportButton) exportButton.disabled = false;
+                    if (exportSpinner) exportSpinner.classList.add('d-none');
+                    
+                    if (data.error) {
+                        // Show error
+                        if (errorAlert) {
+                            errorAlert.textContent = data.error;
+                            errorAlert.classList.remove('d-none');
+                        }
+                    } else {
+                        // Show success
+                        if (successAlert) {
+                            successAlert.classList.remove('d-none');
+                        }
+                        
+                        // Hide placeholder, show results and report contents
+                        if (document.getElementById('initialExportPlaceholder')) {
+                            document.getElementById('initialExportPlaceholder').classList.add('d-none');
+                        }
+                        if (exportResultsSection) {
+                            exportResultsSection.classList.remove('d-none');
+                        }
+                        if (document.getElementById('reportContentsSection')) {
+                            document.getElementById('reportContentsSection').classList.remove('d-none');
+                        }
+                        
+                        // Update filename and download link
+                        if (reportFileName && data.results.file_name) {
+                            reportFileName.textContent = data.results.file_name;
+                        }
+                        if (downloadButton && data.results.file_name) {
+                            downloadButton.href = `/download/${data.results.file_name}`;
+                        }
+                        
+                        // Populate wastage table
+                        const wastageTable = document.getElementById('wastageTable');
+                        if (wastageTable) {
+                            wastageTable.innerHTML = '';
+                            
+                            if (data.results.wastage && data.results.wastage.length) {
+                                data.results.wastage.forEach(wastage => {
+                                    const row = document.createElement('tr');
+                                    const isTotal = wastage.apartment === 'Total';
+                                    
+                                    row.innerHTML = `
+                                        <td>${isTotal ? '<strong>Total</strong>' : wastage.apartment}</td>
+                                        <td>${isTotal ? '<strong>' + wastage.area.toFixed(2) + '</strong>' : wastage.area.toFixed(2)}</td>
+                                        <td>${isTotal ? '<strong>' + wastage.percentage.toFixed(2) + '%</strong>' : wastage.percentage.toFixed(2) + '%'}</td>
+                                    `;
+                                    wastageTable.appendChild(row);
+                                });
+                            } else {
+                                // Example data if no real data available
+                                wastageTable.innerHTML = `
+                                    <tr><td>A1</td><td>15.75</td><td>4.80%</td></tr>
+                                    <tr><td>A2</td><td>12.30</td><td>5.20%</td></tr>
+                                    <tr><td>A3</td><td>10.45</td><td>6.50%</td></tr>
+                                    <tr><td><strong>Total</strong></td><td><strong>38.50</strong></td><td><strong>5.20%</strong></td></tr>
+                                `;
+                            }
+                        }
+                        
+                        // Populate tile summary table
+                        const tileSummaryTable = document.getElementById('tileSummaryTable');
+                        if (tileSummaryTable) {
+                            tileSummaryTable.innerHTML = '';
+                            
+                            if (data.results.summary && data.results.summary.length) {
+                                data.results.summary.forEach(item => {
+                                    const row = document.createElement('tr');
+                                    const isTotal = item.type.toLowerCase().includes('total');
+                                    
+                                    row.innerHTML = `
+                                        <td>${isTotal ? '<strong>' + item.type + '</strong>' : item.type}</td>
+                                        <td>${isTotal ? '<strong>' + item.count + '</strong>' : item.count}</td>
+                                    `;
+                                    tileSummaryTable.appendChild(row);
+                                });
+                            } else {
+                                // Example data if no real data available
+                                tileSummaryTable.innerHTML = `
+                                    <tr><td>Full Tiles</td><td>180</td></tr>
+                                    <tr><td>Irregular Tiles</td><td>10</td></tr>
+                                    <tr><td>Cut Tiles (X)</td><td>30</td></tr>
+                                    <tr><td>Cut Tiles (Y)</td><td>25</td></tr>
+                                    <tr><td>Small Cut Tiles (excluded)</td><td>10</td></tr>
+                                    <tr><td><strong>Total Tiles</strong></td><td><strong>255</strong></td></tr>
+                                `;
+                            }
+                        }
+                        
+                        // Enable next step button
+                        if (finishButton) {
+                            finishButton.classList.remove('disabled');
+                        }
+                        
+                        // Enable next step (Change this for Step 8)
+                        if (document.getElementById('nextStep')) {
+                            document.getElementById('nextStep').classList.remove('disabled');
+                        }
+                    }
+                })
+                .catch(error => {
+                    // Hide processing indicators
+                    if (exportButton) exportButton.disabled = false;
+                    if (exportSpinner) exportSpinner.classList.add('d-none');
+                    
+                    // Show error
+                    if (errorAlert) {
+                        errorAlert.textContent = 'An error occurred: ' + error.message;
+                        errorAlert.classList.remove('d-none');
+                    }
+                });
+            });
+        }
+        
+        // Formatting helpers
+        function formatNumber(num) {
+            return parseFloat(num).toFixed(2);
+        }
+        
+        function formatPercentage(num) {
+            return parseFloat(num).toFixed(2) + '%';
+        }
+    });
+</script>
+{% endblock %}

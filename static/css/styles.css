@@ -1,0 +1,369 @@
+/* Main styles for Tile Layout Application */
+
+/* Progress bar width classes */
+.progress-width-0 { width: 0%; }
+.progress-width-14 { width: 14%; }
+.progress-width-28 { width: 28%; }
+.progress-width-42 { width: 42%; }
+.progress-width-56 { width: 56%; }
+.progress-width-70 { width: 70%; }
+.progress-width-84 { width: 84%; }
+.progress-width-100 { width: 100%; }
+
+/* Step indicator styling */
+.step-indicator {
+    margin-bottom: 2rem;
+}
+
+.step {
+    flex: 1;
+    text-align: center;
+    padding: 0.5rem;
+    border-bottom: 4px solid #e9ecef;
+    font-size: 0.85rem;
+    color: #6c757d;
+    position: relative;
+}
+
+.step.active {
+    border-bottom-color: #198754; /* Changed from blue to green */
+    color: #198754; /* Changed from blue to green */
+    font-weight: bold;
+}
+
+.step.completed {
+    border-bottom-color: #198754;
+    color: #198754;
+}
+
+.step.active::after, .step.completed::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: currentColor;
+}
+
+/* Card styling */
+.card {
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+/* Form controls */
+.form-label {
+    font-weight: bold;
+}
+
+/* Preview containers */
+.preview-container {
+    position: relative;
+    margin: 0 auto;
+}
+
+.layout-preview, .classification-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.layout-preview.active, .classification-preview.active {
+    opacity: 1;
+}
+
+/* Orientation preview */
+.orientation-preview {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.preview-box {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.preview-box.active {
+    opacity: 1;
+}
+
+/* Results sections */
+.results, #tileLayoutSection, #classificationSection, #smallCutsSection, #exportResultsSection {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s, max-height 0.5s;
+}
+
+.results.d-none, #tileLayoutSection.d-none, #classificationSection.d-none, #smallCutsSection.d-none, #exportResultsSection.d-none {
+    opacity: 0;
+    max-height: 0;
+}
+
+.results:not(.d-none), #tileLayoutSection:not(.d-none), #classificationSection:not(.d-none), #smallCutsSection:not(.d-none), #exportResultsSection:not(.d-none) {
+    opacity: 1;
+    max-height: 10000px;
+}
+
+/* Responsive image containers */
+.img-fluid {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Tables */
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* Footer styling */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+/* For smaller screens */
+@media (max-width: 768px) {
+    .step {
+        font-size: 0.7rem;
+    }
+}
+
+/* Loading indicator overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.spinner-container {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
+/* Custom accordion styling */
+.accordion-button:not(.collapsed) {
+    background-color: #d1e7dd; /* Changed from blue to green */
+    color: #198754; /* Changed from blue to green */
+}
+
+/* Export results section styling */
+#downloadButton {
+    padding: 0.8rem 2rem;
+    font-size: 1.2rem;
+    transition: transform 0.2s;
+}
+
+#downloadButton:hover {
+    transform: scale(1.05);
+}
+
+/* New styles for green theme and improved layout */
+
+/* Theme colors */
+:root {
+    --primary-color: #198754;
+    --primary-dark: #157347;
+    --primary-light: #d1e7dd;
+}
+
+/* Button colors */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+/* Progress bar color */
+.progress-bar {
+    background-color: var(--primary-color);
+}
+
+/* Hero banner styling */
+.hero-banner {
+    border-radius: 0.375rem;
+    min-height: 380px;
+    background: linear-gradient(135deg, #198754, #157347);
+}
+
+/* Tile pattern backgrounds */
+.hero-bg-pattern {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.15;
+    background-image: 
+        linear-gradient(30deg, #ffffff 12%, transparent 12.5%, transparent 87%, #ffffff 87.5%, #ffffff),
+        linear-gradient(150deg, #ffffff 12%, transparent 12.5%, transparent 87%, #ffffff 87.5%, #ffffff),
+        linear-gradient(30deg, #ffffff 12%, transparent 12.5%, transparent 87%, #ffffff 87.5%, #ffffff),
+        linear-gradient(150deg, #ffffff 12%, transparent 12.5%, transparent 87%, #ffffff 87.5%, #ffffff),
+        linear-gradient(60deg, #ffffff77 25%, transparent 25.5%, transparent 75%, #ffffff77 75%, #ffffff77);
+    background-size: 80px 140px;
+    background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0;
+    animation: moveBackground 60s linear infinite;
+}
+
+/* Ceramic tile pattern */
+.ceramic-pattern {
+    background-color: #198754;
+    background-image: 
+      linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+      linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+    background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
+    opacity: 0.15;
+}
+
+/* Background animation */
+@keyframes moveBackground {
+    0% {
+        background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0;
+    }
+    100% {
+        background-position: 80px 140px, 80px 140px, 120px 210px, 120px 210px, 80px 140px;
+    }
+}
+
+/* Enhanced logo container with floating effect */
+.logo-container {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.5s ease;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Floating animation for logo */
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+/* Sheen effect for logo */
+.logo-container::after {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 50%;
+    height: 200%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(25deg);
+    animation: sheen 6s infinite;
+}
+
+@keyframes sheen {
+    0%, 10% {
+        left: -100%;
+        opacity: 0;
+    }
+    20% {
+        left: 100%;
+        opacity: 0.6;
+    }
+    100% {
+        left: 100%;
+        opacity: 0;
+    }
+}
+
+/* Z-index helpers */
+.z-1 {
+    z-index: 1;
+}
+
+.z-3 {
+    z-index: 3;
+}
+
+/* Feature icons */
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+/* Step number styling */
+.step-number {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    font-weight: bold;
+    background-color: var(--primary-color) !important;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+/* Workflow steps line */
+.workflow-steps {
+    position: relative;
+}
+
+.workflow-steps::before {
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    width: 1px;
+    height: calc(100% - 55px);
+    background-color: var(--primary-color);
+    opacity: 0.3;
+}
+
+/* Add subtle tile texture to page background */
+body {
+    background-color: #f8f9fa;
+    background-image: 
+      linear-gradient(rgba(25, 135, 84, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(25, 135, 84, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+}

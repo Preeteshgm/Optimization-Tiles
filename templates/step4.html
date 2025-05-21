@@ -1,0 +1,286 @@
+{% extends "index.html" %}
+
+{% block progress_width_value %}56{% endblock %}
+{% block progress_value %}56{% endblock %}
+{% block progress_text %}Step 4: Tile Coverage{% endblock %}
+
+{% block step1_active %}completed{% endblock %}
+{% block step2_active %}completed{% endblock %}
+{% block step3_active %}completed{% endblock %}
+{% block step4_active %}active{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Step 4: Tile Coverage</h2>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <p>Configure tile layout parameters and generate the tile grid.</p>
+        </div>
+        
+        <!-- Side-by-side layout with form on left and visualization on right -->
+        <div class="row">
+            <!-- Left side: Form with parameters -->
+            <div class="col-md-6">
+                <form id="tileLayoutForm">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="groutSpacing">Grout Spacing (mm):</label>
+                                <input type="number" id="groutSpacing" class="form-control" value="3" min="1" max="10">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="staggerPercent">Stagger Percentage (%):</label>
+                                <input type="number" id="staggerPercent" class="form-control" value="0" min="0" max="100" step="10">
+                                <div class="form-text">0% = Standard grid layout (no stagger)<br>
+                                50% = Half-tile stagger (brick pattern)<br>
+                                100% = Full-tile stagger</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Stagger Direction:</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="staggerDirection" id="staggerDirectionX" value="x" checked>
+                                    <label class="form-check-label" for="staggerDirectionX">X Direction</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="staggerDirection" id="staggerDirectionY" value="y">
+                                    <label class="form-check-label" for="staggerDirectionY">Y Direction</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="layout-preview text-center">
+                                <h5>Layout Preview</h5>
+                                <!-- Preview of selected layout type -->
+                                <div class="layout-preview-box">
+                                    <!-- Standard layout -->
+                                    <div id="standardLayout" class="layout-preview-image" style="display: block;">
+                                        <div class="svg-container">
+                                            <svg width="200" height="200" viewBox="0 0 200 200">
+                                                <rect x="10" y="10" width="40" height="40" fill="#28a745" />
+                                                <rect x="55" y="10" width="40" height="40" fill="#28a745" />
+                                                <rect x="100" y="10" width="40" height="40" fill="#28a745" />
+                                                <rect x="145" y="10" width="40" height="40" fill="#28a745" />
+                                                
+                                                <rect x="10" y="55" width="40" height="40" fill="#28a745" />
+                                                <rect x="55" y="55" width="40" height="40" fill="#28a745" />
+                                                <rect x="100" y="55" width="40" height="40" fill="#28a745" />
+                                                <rect x="145" y="55" width="40" height="40" fill="#28a745" />
+                                                
+                                                <rect x="10" y="100" width="40" height="40" fill="#28a745" />
+                                                <rect x="55" y="100" width="40" height="40" fill="#28a745" />
+                                                <rect x="100" y="100" width="40" height="40" fill="#28a745" />
+                                                <rect x="145" y="100" width="40" height="40" fill="#28a745" />
+                                                
+                                                <rect x="10" y="145" width="40" height="40" fill="#28a745" />
+                                                <rect x="55" y="145" width="40" height="40" fill="#28a745" />
+                                                <rect x="100" y="145" width="40" height="40" fill="#28a745" />
+                                                <rect x="145" y="145" width="40" height="40" fill="#28a745" />
+                                            </svg>
+                                        </div>
+                                        <div class="caption">Standard Layout</div>
+                                    </div>
+                                    
+                                    <!-- Staggered layout -->
+                                    <div id="staggeredLayout" class="layout-preview-image" style="display: none;">
+                                        <div class="svg-container">
+                                            <svg width="200" height="200" viewBox="0 0 200 200">
+                                                <rect x="10" y="10" width="40" height="40" fill="#007bff" />
+                                                <rect x="55" y="10" width="40" height="40" fill="#007bff" />
+                                                <rect x="100" y="10" width="40" height="40" fill="#007bff" />
+                                                <rect x="145" y="10" width="40" height="40" fill="#007bff" />
+                                                
+                                                <rect x="32" y="55" width="40" height="40" fill="#007bff" />
+                                                <rect x="77" y="55" width="40" height="40" fill="#007bff" />
+                                                <rect x="122" y="55" width="40" height="40" fill="#007bff" />
+                                                <rect x="167" y="55" width="40" height="40" fill="#007bff" />
+                                                
+                                                <rect x="10" y="100" width="40" height="40" fill="#007bff" />
+                                                <rect x="55" y="100" width="40" height="40" fill="#007bff" />
+                                                <rect x="100" y="100" width="40" height="40" fill="#007bff" />
+                                                <rect x="145" y="100" width="40" height="40" fill="#007bff" />
+                                                
+                                                <rect x="32" y="145" width="40" height="40" fill="#007bff" />
+                                                <rect x="77" y="145" width="40" height="40" fill="#007bff" />
+                                                <rect x="122" y="145" width="40" height="40" fill="#007bff" />
+                                                <rect x="167" y="145" width="40" height="40" fill="#007bff" />
+                                            </svg>
+                                        </div>
+                                        <div class="caption">Staggered Layout</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="button" id="generateTileLayout" class="btn btn-primary">
+                            <span class="spinner-border spinner-border-sm d-none" id="generateSpinner" role="status" aria-hidden="true"></span>
+                            Generate Tile Layout
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="alert alert-danger mt-3 d-none" id="errorAlert"></div>
+                <div class="alert alert-success mt-3 d-none" id="successAlert"></div>
+            </div>
+            
+            <!-- Right side: Generated tile layout visualization -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Generated Tile Layout</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="tileLayout" class="tile-layout-container text-center">
+                            <!-- Tile layout image will be inserted here -->
+                            <div class="alert alert-info">
+                                Click "Generate Tile Layout" to create the tile layout visualization.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block prev_step %}
+<a href="{{ url_for('step3') }}" class="btn btn-secondary">Previous: Set Orientation</a>
+{% endblock %}
+
+{% block next_step %}
+<a id="nextStep" href="{{ url_for('step5') }}" class="btn btn-primary disabled">Next: Classification</a>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle stagger layout preview when stagger percentage changes
+    const staggerPercentInput = document.getElementById('staggerPercent');
+    const standardLayout = document.getElementById('standardLayout');
+    const staggeredLayout = document.getElementById('staggeredLayout');
+    
+    if (staggerPercentInput && standardLayout && staggeredLayout) {
+        staggerPercentInput.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            if (value > 0) {
+                standardLayout.style.display = 'none';
+                staggeredLayout.style.display = 'block';
+            } else {
+                standardLayout.style.display = 'block';
+                staggeredLayout.style.display = 'none';
+            }
+        });
+    }
+    
+    // Generate tile layout button
+    const generateButton = document.getElementById('generateTileLayout');
+    const generateSpinner = document.getElementById('generateSpinner');
+    const errorAlert = document.getElementById('errorAlert');
+    const successAlert = document.getElementById('successAlert');
+    const tileLayout = document.getElementById('tileLayout');
+    const nextStep = document.getElementById('nextStep');
+    
+    if (generateButton) {
+        generateButton.addEventListener('click', function() {
+            // Show loading
+            if (generateSpinner) generateSpinner.classList.remove('d-none');
+            if (errorAlert) errorAlert.classList.add('d-none');
+            if (successAlert) successAlert.classList.add('d-none');
+            generateButton.disabled = true;
+            
+            if (window.showLoading) {
+                window.showLoading('Generating tile layout...');
+            }
+            
+            // Gather form data - convert stagger percentage from 0-100 to 0-1
+            const staggerPercentInput = document.getElementById('staggerPercent').value || 0;
+            const staggerPercent = parseFloat(staggerPercentInput) / 100; // Convert to 0-1 range
+            
+            // Send request to server
+            fetch('/step4', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    grout_spacing: parseFloat(document.getElementById('groutSpacing').value || 3),
+                    stagger_percent: staggerPercent, // Now in 0-1 range
+                    stagger_direction: document.querySelector('input[name="staggerDirection"]:checked')?.value || 'x'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading
+                if (generateSpinner) generateSpinner.classList.add('d-none');
+                generateButton.disabled = false;
+                
+                if (window.hideLoading) {
+                    window.hideLoading();
+                }
+                
+                if (data.error) {
+                    console.error('Error:', data.error);
+                    // Show error message
+                    if (errorAlert) {
+                        errorAlert.textContent = data.error;
+                        errorAlert.classList.remove('d-none');
+                    }
+                } else {
+                    // Show success message
+                    if (successAlert) {
+                        successAlert.textContent = `Success! Generated ${data.tile_count || 0} tiles.`;
+                        successAlert.classList.remove('d-none');
+                    }
+                    
+                    // Display tile plot
+                    if (tileLayout && data.tile_plot) {
+                        const img = document.createElement('img');
+                        img.src = 'data:image/png;base64,' + data.tile_plot;
+                        img.alt = 'Tile Layout';
+                        img.className = 'img-fluid';
+                        
+                        // Clear previous content and add new image
+                        tileLayout.innerHTML = '';
+                        tileLayout.appendChild(img);
+                    }
+                    
+                    // Enable next step button
+                    if (nextStep) {
+                        nextStep.classList.remove('disabled');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Hide loading
+                if (generateSpinner) generateSpinner.classList.add('d-none');
+                generateButton.disabled = false;
+                
+                if (window.hideLoading) {
+                    window.hideLoading();
+                }
+                
+                // Show error message
+                if (errorAlert) {
+                    errorAlert.textContent = 'Network error: ' + error.message;
+                    errorAlert.classList.remove('d-none');
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

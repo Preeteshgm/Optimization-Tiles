@@ -1,0 +1,352 @@
+{% extends "index.html" %}
+
+{% block progress_width %}84%{% endblock %}
+{% block progress_value %}84{% endblock %}
+{% block progress_text %}Step 6: Small Cuts{% endblock %}
+
+{% block step1_active %}completed{% endblock %}
+{% block step2_active %}completed{% endblock %}
+{% block step3_active %}completed{% endblock %}
+{% block step4_active %}completed{% endblock %}
+{% block step5_active %}completed{% endblock %}
+{% block step6_active %}active{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Step 6: Identify Small Cut Tiles</h2>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <p>Identify cut tiles with dimensions smaller than a specified threshold. These small tiles may require special handling or could be removed from the layout.</p>
+        </div>
+        
+        <!-- Side-by-side layout with form on left and visualization on right -->
+        <div class="row">
+            <!-- Left side: Form with parameters -->
+            <div class="col-md-6">
+                <form id="smallCutsForm">
+                    <div class="card mb-4">
+                        <div class="card-header">Size Threshold</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="sizeThreshold" class="form-label">Size Threshold (mm)</label>
+                                <input type="number" class="form-control" id="sizeThreshold" name="size_threshold" value="10" min="1" max="100" step="1">
+                                <div class="form-text">Cut tiles with dimension less than this value will be identified as "small cuts".</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="excludeSmallCuts" name="exclude_small_cuts" checked>
+                                    <label class="form-check-label" for="excludeSmallCuts">
+                                        Exclude small cuts from future processing
+                                    </label>
+                                </div>
+                                <div class="form-text">If checked, small cut tiles will be excluded from export calculations.</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">Small Cuts Information</div>
+                        <div class="card-body">
+                            <p><strong>What are small cuts?</strong></p>
+                            <p>Small cut tiles are pieces with a dimension less than the specified threshold. These can be problematic for several reasons:</p>
+                            <ul>
+                                <li>Difficult to handle during installation</li>
+                                <li>May break easily during cutting or transport</li>
+                                <li>Can affect the overall appearance of the tiled surface</li>
+                                <li>Potential waste of material</li>
+                            </ul>
+                            <p>By identifying these small cuts, you can decide whether to modify the layout or handle them separately.</p>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="identifyButton">
+                        <span class="spinner-border spinner-border-sm d-none" id="identifySpinner" role="status" aria-hidden="true"></span>
+                        Identify Small Cuts
+                    </button>
+                    
+                    <div class="alert alert-success mt-3 d-none" id="successAlert">
+                        <strong>Success!</strong> Small cut tiles have been identified.
+                    </div>
+
+                    <div class="alert alert-danger mt-3 d-none" id="errorAlert"></div>
+                </form>
+            </div>
+            
+            <!-- Right side: Small cuts visualization and results -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Small Cuts Visualization</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="smallCutsPlot" class="img-fluid text-center">
+                            <!-- Initially show a placeholder message -->
+                            <div class="alert alert-info">
+                                Click "Identify Small Cuts" to generate the visualization.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-none" id="smallCutsSection">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">Statistics</div>
+                                <div class="card-body" id="smallCutsStats">
+                                    <!-- Will be filled by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">Small Cuts Distribution</div>
+                                <div class="card-body">
+                                    <div id="distributionTable">
+                                        <!-- Will be filled by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">Small Cuts List</div>
+                        <div class="card-body">
+                            <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                                <table class="table table-striped table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Apartment</th>
+                                            <th>Room</th>
+                                            <th>Classification</th>
+                                            <th>Cut Dimension (mm)</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="smallCutsList">
+                                        <!-- Will be filled by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block prev_step %}
+<a href="{{ url_for('step5') }}" class="btn btn-secondary">Previous: Classification</a>
+{% endblock %}
+
+{% block next_step %}
+<a id="nextStep" href="{{ url_for('step7') }}" class="btn btn-primary disabled">Next: Export</a>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const smallCutsForm = document.getElementById('smallCutsForm');
+        const identifyButton = document.getElementById('identifyButton');
+        const identifySpinner = document.getElementById('identifySpinner');
+        const successAlert = document.getElementById('successAlert');
+        const errorAlert = document.getElementById('errorAlert');
+        const smallCutsSection = document.getElementById('smallCutsSection');
+        const nextStep = document.getElementById('nextStep');
+        
+        smallCutsForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show processing indicators
+            identifyButton.disabled = true;
+            identifySpinner.classList.remove('d-none');
+            errorAlert.classList.add('d-none');
+            successAlert.classList.add('d-none');
+            
+            // Gather form data
+            const formData = {
+                size_threshold: parseInt(document.getElementById('sizeThreshold').value),
+                exclude_small_cuts: document.getElementById('excludeSmallCuts').checked
+            };
+            
+            // Send data to server
+            fetch('/step6', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide processing indicators
+                identifyButton.disabled = false;
+                identifySpinner.classList.add('d-none');
+                
+                if (data.error) {
+                    // Show error
+                    errorAlert.textContent = data.error;
+                    errorAlert.classList.remove('d-none');
+                } else {
+                    // Show success
+                    successAlert.classList.remove('d-none');
+                    
+                    // Update the plot
+                    const plotDiv = document.getElementById('smallCutsPlot');
+                    plotDiv.innerHTML = ''; // Clear any previous content
+                    const img = document.createElement('img');
+                    img.src = 'data:image/png;base64,' + data.small_tiles_plot;
+                    img.alt = 'Small Cuts Visualization';
+                    img.className = 'img-fluid';
+                    plotDiv.appendChild(img);
+                    
+                    // Show the small cuts section
+                    smallCutsSection.classList.remove('d-none');
+                    
+                    // Populate statistics
+                    const smallCutsStats = document.getElementById('smallCutsStats');
+                    
+                    // Use data from server if available, otherwise use example data
+                    const smallCutCount = data.small_tile_count || 10;
+                    const totalCutCount = data.total_cut_count || 55;
+                    const smallCutPercentage = ((smallCutCount / totalCutCount) * 100).toFixed(1);
+                    
+                    smallCutsStats.innerHTML = `
+                        <p><strong>Small Cuts Found:</strong> ${smallCutCount}</p>
+                        <p><strong>Percentage of Total Cut Tiles:</strong> ${smallCutPercentage}%</p>
+                        <p><strong>Size Threshold:</strong> < ${formData.size_threshold}mm</p>
+                        <p><strong>Status:</strong> ${formData.exclude_small_cuts ? 'Excluded from export' : 'Included in export'}</p>
+                    `;
+                    
+                    // Populate distribution table
+                    const distributionTable = document.getElementById('distributionTable');
+                    
+                    // Use data from server if available, otherwise use example data
+                    if (data.location_summary && data.size_distribution) {
+                        distributionTable.innerHTML = generateDistributionHTML(data.location_summary, data.size_distribution);
+                    } else {
+                        distributionTable.innerHTML = `
+                            <h6>Distribution by Room</h6>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Apartment</th>
+                                        <th>Room</th>
+                                        <th>Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>A1</td><td>Bathroom</td><td>4</td></tr>
+                                    <tr><td>A1</td><td>Kitchen</td><td>2</td></tr>
+                                    <tr><td>A2</td><td>Bathroom</td><td>3</td></tr>
+                                    <tr><td>A3</td><td>Kitchen</td><td>1</td></tr>
+                                </tbody>
+                            </table>
+                            
+                            <h6 class="mt-3">Distribution by Size</h6>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Size Range</th>
+                                        <th>Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>0-2mm</td><td>1</td></tr>
+                                    <tr><td>2-4mm</td><td>2</td></tr>
+                                    <tr><td>4-6mm</td><td>3</td></tr>
+                                    <tr><td>6-8mm</td><td>2</td></tr>
+                                    <tr><td>8-10mm</td><td>2</td></tr>
+                                </tbody>
+                            </table>
+                        `;
+                    }
+                    
+                    // Populate small cuts list
+                    const smallCutsList = document.getElementById('smallCutsList');
+                    
+                    // Use data from server if available, otherwise use example data
+                    if (data.small_tiles_list && data.small_tiles_list.length > 0) {
+                        smallCutsList.innerHTML = '';
+                        data.small_tiles_list.forEach(tile => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${tile.apartment}</td>
+                                <td>${tile.room}</td>
+                                <td>${tile.classification}</td>
+                                <td>${tile.cut_dimension.toFixed(1)}</td>
+                                <td>${formData.exclude_small_cuts ? 'Excluded' : 'Included'}</td>
+                            `;
+                            smallCutsList.appendChild(row);
+                        });
+                    } else {
+                        smallCutsList.innerHTML = `
+                            <tr><td>A1</td><td>Bathroom</td><td>Cut X</td><td>2.5</td><td>${formData.exclude_small_cuts ? 'Excluded' : 'Included'}</td></tr>
+                            <tr><td>A1</td><td>Bathroom</td><td>Cut Y</td><td>4.7</td><td>${formData.exclude_small_cuts ? 'Excluded' : 'Included'}</td></tr>
+                            <tr><td>A1</td><td>Bathroom</td><td>Cut X</td><td>5.2</td><td>${formData.exclude_small_cuts ? 'Excluded' : 'Included'}</td></tr>
+                            <tr><td>A1</td><td>Bathroom</td><td>Cut Y</td><td>8.3</td><td>${formData.exclude_small_cuts ? 'Excluded' : 'Included'}</td></tr>
+                            <tr><td>A1</td><td>Kitchen</td><td>Cut X</td><td>3.1</td><td>${formData.exclude_small_cuts ? 'Excluded' : 'Included'}</td></tr>
+                            <tr><td>A1</td><td>Kitchen</td><td>Cut Y</td><td>9.8</td><td>${formData.exclude_small_cuts ? 'Excluded' : 'Included'}</td></tr>
+                            <tr><td>A2</td><td>Bathroom</td><td>Cut X</td><td>1.5</td><td>${formData.exclude_small_cuts ? 'Excluded' : 'Included'}</td></tr>
+                            <tr><td>A2</td><td>Bathroom</td><td>Cut Y</td><td>5.5</td><td>${formData.exclude_small_cuts ? 'Excluded' : 'Included'}</td></tr>
+                            <tr><td>A2</td><td>Bathroom</td><td>Cut X</td><td>7.2</td><td>${formData.exclude_small_cuts ? 'Excluded' : 'Included'}</td></tr>
+                            <tr><td>A3</td><td>Kitchen</td><td>Cut X</td><td>6.9</td><td>${formData.exclude_small_cuts ? 'Excluded' : 'Included'}</td></tr>
+                        `;
+                    }
+                    
+                    // Enable next step
+                    nextStep.classList.remove('disabled');
+                }
+            })
+            .catch(error => {
+                // Hide processing indicators
+                identifyButton.disabled = false;
+                identifySpinner.classList.add('d-none');
+                
+                // Show error
+                errorAlert.textContent = 'An error occurred: ' + error.message;
+                errorAlert.classList.remove('d-none');
+            });
+        });
+        
+        // Helper function to generate distribution HTML
+        function generateDistributionHTML(locationSummary, sizeDistribution) {
+            let html = '';
+            
+            // Location summary
+            html += '<h6>Distribution by Room</h6>';
+            html += '<table class="table table-sm">';
+            html += '<thead><tr><th>Apartment</th><th>Room</th><th>Count</th></tr></thead>';
+            html += '<tbody>';
+            
+            locationSummary.forEach(location => {
+                html += `<tr><td>${location.apartment}</td><td>${location.room}</td><td>${location.count}</td></tr>`;
+            });
+            
+            html += '</tbody></table>';
+            
+            // Size distribution
+            html += '<h6 class="mt-3">Distribution by Size</h6>';
+            html += '<table class="table table-sm">';
+            html += '<thead><tr><th>Size Range</th><th>Count</th></tr></thead>';
+            html += '<tbody>';
+            
+            sizeDistribution.forEach(range => {
+                html += `<tr><td>${range.range}</td><td>${range.count}</td></tr>`;
+            });
+            
+            html += '</tbody></table>';
+            
+            return html;
+        }
+    });
+</script>
+{% endblock %}

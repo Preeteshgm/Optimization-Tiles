@@ -1,0 +1,227 @@
+{% extends "index.html" %}
+
+{% block progress_width %}14%{% endblock %}
+{% block progress_value %}14{% endblock %}
+{% block progress_text %}Step 1: Load DXF{% endblock %}
+
+{% block step1_active %}active{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body p-4">
+        <div class="row">
+            <!-- Left column: Form and summary -->
+            <div class="col-md-4">
+                <!-- Upload form -->
+                <h5 class="mb-3">Select DXF File</h5>
+                <form id="uploadForm" enctype="multipart/form-data" class="mb-4">
+                    <div class="mb-3">
+                        <input class="form-control" type="file" id="dxfFile" name="dxf_file" accept=".dxf">
+                        <div class="form-text">Upload a DXF file containing room boundaries and start points (SP layer).</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="processButton">
+                        <span class="spinner-border spinner-border-sm d-none me-2" id="processSpinner" role="status" aria-hidden="true"></span>
+                        Process DXF File
+                    </button>
+                </form>
+
+                <div class="alert alert-info mb-4 d-none" id="processingAlert">
+                    <strong>Processing...</strong> This may take a moment.
+                </div>
+
+                <div class="alert alert-danger mb-4 d-none" id="errorAlert"></div>
+
+                <!-- CAD Template Download Section -->
+                <div class="card mb-4 bg-light">
+                    <div class="card-body">
+                        <h5 class="mb-3"><i class="bi bi-file-earmark-arrow-down me-2"></i>CAD Template</h5>
+                        <p class="small mb-3">Download our CAD template with the required layers and structure for optimal processing:</p>
+                        <ul class="small mb-3">
+                            <li><strong>Tile Layout</strong> layer: Room boundaries (closed polylines)</li>
+                            <li><strong>SP</strong> layer: Start points for tile placement</li>
+                            <li><strong>Info</strong> layer: Annotation and dimensions</li>
+                        </ul>
+                        <a href="{{ url_for('static', filename='downloads/template.dxf') }}" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="bi bi-download me-1"></i> Download Template
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Summary section -->
+                <div class="d-none" id="summarySection">
+                    <h5 class="mb-3">Summary</h5>
+                    <div class="mb-3">
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                            <span>Rooms Found:</span> 
+                            <span id="roomCount" class="badge bg-primary">0</span>
+                        </div>
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                            <span>Start Points Found:</span> 
+                            <span id="startPointCount" class="badge bg-primary">0</span>
+                        </div>
+                        <div>
+                            <span>Tile Sizes:</span>
+                            <div id="tileSizes" class="mt-1">None detected</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right column: Visualizations -->
+            <div class="col-md-8">
+                <div class="row">
+                    <!-- Room Distribution -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Room Distribution</h5>
+                        <div class="border rounded mb-4" id="clusterPlotContainer">
+                            <div id="clusterPlot" class="img-fluid text-center p-3">
+                                <img src="" alt="Room Clusters" class="img-fluid d-none">
+                                <!-- Placeholder -->
+                                <div id="clusterPlotPlaceholder" class="d-flex justify-content-center align-items-center" style="height: 300px;">
+                                    <div class="text-center text-muted">
+                                        <i class="bi bi-grid-3x3-gap" style="font-size: 2rem;"></i>
+                                        <p class="mt-2">Room distribution will appear here after processing</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Room Boundaries -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Room Boundaries & Start Points</h5>
+                        <div class="border rounded mb-4" id="roomPlotContainer">
+                            <div id="roomPlot" class="img-fluid text-center p-3">
+                                <img src="" alt="Room Boundaries" class="img-fluid d-none">
+                                <!-- Placeholder -->
+                                <div id="roomPlotPlaceholder" class="d-flex justify-content-center align-items-center" style="height: 300px;">
+                                    <div class="text-center text-muted">
+                                        <i class="bi bi-bounding-box" style="font-size: 2rem;"></i>
+                                        <p class="mt-2">Room boundaries will appear here after processing</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CAD Template Instructions for Wide Screens -->
+                <div class="d-none d-lg-block mt-2">
+                    <div class="alert alert-light border">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0 me-3">
+                                <i class="bi bi-info-circle-fill text-primary" style="font-size: 1.5rem;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-2">How to Prepare Your DXF File</h6>
+                                <p class="mb-0 small">Create your DXF with the following structure for best results:</p>
+                                <ol class="small mb-2">
+                                    <li>Draw room boundaries as closed polylines on the <strong>Tile Layout</strong> layer</li>
+                                    <li>Place start points (indicating tile orientation) on the <strong>SP</strong> layer</li>
+                                    <li>Use the <strong>Info</strong> layer for any additional information or dimensions</li>
+                                </ol>
+                                <p class="small mb-0">Download our template above for a pre-configured CAD file.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block next_step %}
+<a id="nextStepButton" href="{{ url_for('step2') }}" class="btn btn-primary disabled">Next: Room Naming</a>
+{% endblock %}
+
+{% block head_extra %}
+<!-- Add Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const uploadForm = document.getElementById('uploadForm');
+        const processButton = document.getElementById('processButton');
+        const processSpinner = document.getElementById('processSpinner');
+        const processingAlert = document.getElementById('processingAlert');
+        const errorAlert = document.getElementById('errorAlert');
+        const summarySection = document.getElementById('summarySection');
+        const nextStepButton = document.getElementById('nextStepButton');
+        const clusterPlotImg = document.querySelector('#clusterPlot img');
+        const roomPlotImg = document.querySelector('#roomPlot img');
+        const clusterPlotPlaceholder = document.getElementById('clusterPlotPlaceholder');
+        const roomPlotPlaceholder = document.getElementById('roomPlotPlaceholder');
+        
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show processing indicators
+            processButton.disabled = true;
+            processSpinner.classList.remove('d-none');
+            processingAlert.classList.remove('d-none');
+            errorAlert.classList.add('d-none');
+            
+            const formData = new FormData(uploadForm);
+            
+            fetch('/step1', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide processing indicators
+                processButton.disabled = false;
+                processSpinner.classList.add('d-none');
+                processingAlert.classList.add('d-none');
+                
+                if (data.error) {
+                    // Show error
+                    errorAlert.textContent = data.error;
+                    errorAlert.classList.remove('d-none');
+                } else {
+                    // Show results
+                    document.getElementById('roomCount').textContent = data.room_count;
+                    document.getElementById('startPointCount').textContent = data.start_point_count;
+                    
+                    // Format tile sizes
+                    if (data.tile_sizes && data.tile_sizes.length > 0) {
+                        const tileSizesString = data.tile_sizes.map(size => `${size[0]}mm × ${size[1]}mm`).join(', ');
+                        document.getElementById('tileSizes').textContent = tileSizesString;
+                    } else {
+                        document.getElementById('tileSizes').textContent = 'None detected';
+                    }
+                    
+                    // Show plots and hide placeholders
+                    clusterPlotImg.src = 'data:image/png;base64,' + data.cluster_plot;
+                    roomPlotImg.src = 'data:image/png;base64,' + data.room_plot;
+                    
+                    clusterPlotImg.classList.remove('d-none');
+                    roomPlotImg.classList.remove('d-none');
+                    
+                    if (clusterPlotPlaceholder) clusterPlotPlaceholder.classList.add('d-none');
+                    if (roomPlotPlaceholder) roomPlotPlaceholder.classList.add('d-none');
+                    
+                    // Show summary
+                    summarySection.classList.remove('d-none');
+                    
+                    // Enable next button
+                    if (nextStepButton) nextStepButton.classList.remove('disabled');
+                }
+            })
+            .catch(error => {
+                // Hide processing indicators
+                processButton.disabled = false;
+                processSpinner.classList.add('d-none');
+                processingAlert.classList.add('d-none');
+                
+                // Show error
+                errorAlert.textContent = 'An error occurred: ' + error.message;
+                errorAlert.classList.remove('d-none');
+            });
+        });
+    });
+</script>
+{% endblock %}

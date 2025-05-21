@@ -1,0 +1,627 @@
+{% extends "index.html" %}
+
+{% block progress_width %}100%{% endblock %}
+{% block progress_value %}100{% endblock %}
+{% block progress_text %}Step 9: Export Reports{% endblock %}
+
+{% block step1_active %}completed{% endblock %}
+{% block step2_active %}completed{% endblock %}
+{% block step3_active %}completed{% endblock %}
+{% block step4_active %}completed{% endblock %}
+{% block step5_active %}completed{% endblock %}
+{% block step6_active %}completed{% endblock %}
+{% block step7_active %}completed{% endblock %}
+{% block step8_active %}completed{% endblock %}
+{% block step9_active %}active{% endblock %}
+
+{% block head_extra %}
+<!-- Add Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Step 9: Comprehensive Report Generation</h2>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info mb-4">
+            <div class="d-flex">
+                <div class="flex-shrink-0 me-3">
+                    <i class="bi bi-info-circle-fill fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="alert-heading">Export Data to Excel Reports</h5>
+                    <p>Create detailed Excel reports from your optimization results. These reports include matching data for each apartment, inventory status, and a comprehensive summary.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main row with content -->
+        <div class="row">
+            <!-- Left column: Form and settings -->
+            <div class="col-md-5">
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Report Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="reportForm">
+                            <!-- Project name input -->
+                            <div class="mb-3">
+                                <label for="projectName" class="form-label">Project Name</label>
+                                <input type="text" class="form-control" id="projectName" 
+                                       placeholder="My Tile Project" value="Tile_Project">
+                                <div class="form-text">Used for naming the generated files</div>
+                            </div>
+                            
+                            <!-- Export format selection -->
+                            <div class="mb-3">
+                                <label class="form-label">Export Format</label>
+                                <div class="d-flex">
+                                    <div class="form-check me-3">
+                                        <input class="form-check-input" type="radio" name="exportFormat" 
+                                               id="formatZip" value="zip" checked>
+                                        <label class="form-check-label" for="formatZip">
+                                            ZIP Package
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="exportFormat" 
+                                               id="formatSeparate" value="separate">
+                                        <label class="form-check-label" for="formatSeparate">
+                                            Separate Files
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Included reports checkboxes -->
+                            <div class="mb-3">
+                                <label class="form-label">Include Reports</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="includeApartments" checked>
+                                    <label class="form-check-label" for="includeApartments">
+                                        Apartment Reports (one per apartment)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="includeInventory" checked>
+                                    <label class="form-check-label" for="includeInventory">
+                                        Inventory Report
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="includeSummary" checked>
+                                    <label class="form-check-label" for="includeSummary">
+                                        Summary Report
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="includeVisualization" checked>
+                                    <label class="form-check-label" for="includeVisualization">
+                                        Include Visualization
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Generate reports button -->
+                            <button type="submit" class="btn btn-primary w-100" id="generateBtn">
+                                <span class="spinner-border spinner-border-sm d-none" id="generateSpinner" role="status" aria-hidden="true"></span>
+                                <i class="bi bi-file-earmark-spreadsheet me-2"></i>Generate Reports
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Optimization stats card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Optimization Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-6 text-center border-end">
+                                <div class="fs-2 fw-bold text-primary">{{ match_stats.total_matches }}</div>
+                                <div class="text-muted small">Total Matches</div>
+                            </div>
+                            <div class="col-6 text-center">
+                                <div class="fs-2 fw-bold text-success">{{ "%.2f"|format(match_stats.total_savings/1000000) }} m²</div>
+                                <div class="text-muted small">Material Saved</div>
+                            </div>
+                        </div>
+                        
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Within-Apartment Matches</span>
+                                <span class="badge bg-primary rounded-pill">{{ match_stats.within_apartment_matches }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Cross-Apartment Matches</span>
+                                <span class="badge bg-secondary rounded-pill">{{ match_stats.cross_apartment_matches }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Inventory Matches</span>
+                                <span class="badge bg-success rounded-pill">{{ match_stats.inventory_matches }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Export Options</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Generate quick exports of specific reports:</p>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" id="downloadReportBtn">
+                                <i class="bi bi-file-earmark-spreadsheet me-2"></i>Download Detailed Match List
+                            </button>
+                            <button class="btn btn-outline-secondary" id="downloadVisualizationBtn">
+                                <i class="bi bi-file-earmark-image me-2"></i>Download Visualization
+                            </button>
+                            <button class="btn btn-outline-success" id="downloadFullReportBtn">
+                                <i class="bi bi-file-earmark-zip me-2"></i>Download Complete Report Package
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right column: Visualization and results -->
+            <div class="col-md-7">
+                <!-- Optimization visualization -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Optimization Visualization</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        {% if optimization_plot %}
+                        <img src="data:image/png;base64,{{ optimization_plot }}" class="img-fluid" alt="Optimization Visualization">
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>No visualization available. Run optimization in Step 8 first.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Generated files section - initially hidden -->
+                <div class="card mb-4 d-none" id="generatedFilesCard">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Generated Files</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">Your reports have been generated successfully!</p>
+                        
+                        <div class="list-group mb-4" id="filesList">
+                            <!-- Files will be added here dynamically -->
+                        </div>
+                        
+                        <div class="alert alert-success mb-3">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="bi bi-check-circle-fill fs-4"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-1">All reports generated successfully. Click the download button below to get all reports in a single package.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <a href="#" class="btn btn-primary w-100" id="downloadBtn">
+                            <i class="bi bi-download me-2"></i>Download All Reports
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Apartment analysis section -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Apartment Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Apartment</th>
+                                        <th class="text-center">Within-Apt</th>
+                                        <th class="text-center">Cross-Apt</th>
+                                        <th class="text-center">Inventory</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for apt in apartments %}
+                                    <tr>
+                                        <td>{{ apt }}</td>
+                                        <td class="text-center">
+                                            {% if apt in apartment_stats and apartment_stats[apt].within_apartment > 0 %}
+                                            <span class="badge bg-info">{{ apartment_stats[apt].within_apartment }}</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">0</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if apt in apartment_stats and apartment_stats[apt].cross_apartment > 0 %}
+                                            <span class="badge bg-secondary">{{ apartment_stats[apt].cross_apartment }}</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">0</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if apt in apartment_stats and apartment_stats[apt].inventory > 0 %}
+                                            <span class="badge bg-success">{{ apartment_stats[apt].inventory }}</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">0</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            <button type="button" class="btn btn-sm btn-outline-primary apartment-preview-btn" 
+                                                    data-apartment="{{ apt }}">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    <!-- Add a summary row at the bottom -->
+                                    <tr class="table-light">
+                                        <td><strong>TOTAL</strong></td>
+                                        <td class="text-center">
+                                            <span class="badge bg-dark">{{ match_stats.within_apartment_matches }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-dark">{{ match_stats.cross_apartment_matches }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-dark">{{ match_stats.inventory_matches }}</span>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Error and success alerts -->
+        <div class="alert alert-danger mt-3 d-none" id="errorAlert"></div>
+        <div class="alert alert-success mt-3 d-none" id="successAlert"></div>
+    </div>
+</div>
+
+<!-- Apartment Preview Modal -->
+<div class="modal fade" id="apartmentPreviewModal" tabindex="-1" aria-labelledby="apartmentPreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="apartmentPreviewModalLabel">Apartment Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div id="apartmentPreviewContent" class="d-none">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="downloadApartmentBtn">
+                    <i class="bi bi-download me-2"></i>Download Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block prev_step %}
+<a href="{{ url_for('step8') }}" class="btn btn-secondary">Previous: Optimize</a>
+{% endblock %}
+
+{% block next_step %}
+<a href="{{ url_for('index') }}" class="btn btn-primary">Finish & Return to Home</a>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elements
+        const reportForm = document.getElementById('reportForm');
+        const generateBtn = document.getElementById('generateBtn');
+        const generateSpinner = document.getElementById('generateSpinner');
+        const errorAlert = document.getElementById('errorAlert');
+        const successAlert = document.getElementById('successAlert');
+        const generatedFilesCard = document.getElementById('generatedFilesCard');
+        const filesList = document.getElementById('filesList');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const downloadReportBtn = document.getElementById('downloadReportBtn');
+        const downloadVisualizationBtn = document.getElementById('downloadVisualizationBtn');
+        const downloadFullReportBtn = document.getElementById('downloadFullReportBtn');
+        
+        // Apartment preview modal elements
+        const apartmentPreviewModal = document.getElementById('apartmentPreviewModal');
+        const apartmentPreviewModalLabel = document.getElementById('apartmentPreviewModalLabel');
+        const apartmentPreviewContent = document.getElementById('apartmentPreviewContent');
+        const downloadApartmentBtn = document.getElementById('downloadApartmentBtn');
+        const apartmentPreviewBtns = document.querySelectorAll('.apartment-preview-btn');
+        
+        // Handle quick export buttons
+        if (downloadReportBtn) {
+            downloadReportBtn.addEventListener('click', function() {
+                // Redirect to the report generation endpoint
+                window.location.href = '/step8/export_matching_results';
+            });
+        }
+        
+        if (downloadVisualizationBtn) {
+            downloadVisualizationBtn.addEventListener('click', function() {
+                // Redirect to the visualization download endpoint
+                window.location.href = '/step9/download_report?type=visualization';
+            });
+        }
+        
+        if (downloadFullReportBtn) {
+            downloadFullReportBtn.addEventListener('click', function() {
+                // Redirect to the full report download endpoint
+                window.location.href = '/step8/download_full_report';
+            });
+        }
+        
+        // Handle report form submission
+        reportForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            generateBtn.disabled = true;
+            generateSpinner.classList.remove('d-none');
+            errorAlert.classList.add('d-none');
+            successAlert.classList.add('d-none');
+            
+            // Get form values
+            const projectName = document.getElementById('projectName').value.trim() || 'Tile_Project';
+            const exportFormat = document.querySelector('input[name="exportFormat"]:checked').value;
+            const includeApartments = document.getElementById('includeApartments').checked;
+            const includeInventory = document.getElementById('includeInventory').checked;
+            const includeSummary = document.getElementById('includeSummary').checked;
+            const includeVisualization = document.getElementById('includeVisualization').checked;
+            
+            // Prepare request data
+            const requestData = {
+                project_name: projectName,
+                export_format: exportFormat,
+                include_apartment_reports: includeApartments,
+                include_inventory_report: includeInventory,
+                include_summary_report: includeSummary,
+                include_visualization: includeVisualization
+            };
+            
+            // Send request to server
+            fetch('/step9/generate_reports', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Reset loading state
+                generateBtn.disabled = false;
+                generateSpinner.classList.add('d-none');
+                
+                if (data.error) {
+                    // Show error message
+                    errorAlert.textContent = data.error;
+                    errorAlert.classList.remove('d-none');
+                    
+                    // Hide files card if it was shown
+                    generatedFilesCard.classList.add('d-none');
+                } else {
+                    // Show success message
+                    successAlert.textContent = 'Reports generated successfully!';
+                    successAlert.classList.remove('d-none');
+                    
+                    // Update download button
+                    downloadBtn.href = data.download_url;
+                    
+                    // Clear and populate files list
+                    filesList.innerHTML = '';
+                    
+                    if (data.files && data.files.length > 0) {
+                        data.files.forEach(file => {
+                            let icon = 'file-earmark';
+                            if (file.type === 'excel') {
+                                icon = 'file-earmark-spreadsheet';
+                            } else if (file.type === 'zip') {
+                                icon = 'file-earmark-zip';
+                            }
+                            
+                            const fileItem = document.createElement('a');
+                            fileItem.href = '#';
+                            fileItem.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                            fileItem.innerHTML = `
+                                <div>
+                                    <i class="bi bi-${icon} me-2"></i>
+                                    ${file.name}
+                                </div>
+                                <span class="badge bg-primary rounded-pill">${file.size}</span>
+                            `;
+                            
+                            filesList.appendChild(fileItem);
+                        });
+                    }
+                    
+                    // Show files card
+                    generatedFilesCard.classList.remove('d-none');
+                    
+                    // Scroll to files card
+                    generatedFilesCard.scrollIntoView({ behavior: 'smooth' });
+                }
+            })
+            .catch(error => {
+                // Reset loading state
+                generateBtn.disabled = false;
+                generateSpinner.classList.add('d-none');
+                
+                // Show error message
+                errorAlert.textContent = 'An error occurred while generating reports.';
+                errorAlert.classList.remove('d-none');
+                
+                console.error('Error:', error);
+            });
+        });
+        
+        // Initialize apartment preview buttons
+        apartmentPreviewBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const apartment = this.getAttribute('data-apartment');
+                
+                // Set modal title
+                apartmentPreviewModalLabel.textContent = `Apartment ${apartment} Preview`;
+                
+                // Show loading spinner, hide content
+                document.querySelector('#apartmentPreviewModal .spinner-border').classList.remove('d-none');
+                apartmentPreviewContent.classList.add('d-none');
+                
+                // Set download button apartment
+                downloadApartmentBtn.setAttribute('data-apartment', apartment);
+                
+                // Show the modal
+                const modal = new bootstrap.Modal(apartmentPreviewModal);
+                modal.show();
+                
+                // Fetch apartment data
+                fetch(`/step9/preview_report?type=apartment&apartment=${apartment}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Hide loading spinner, show content
+                        document.querySelector('#apartmentPreviewModal .spinner-border').classList.add('d-none');
+                        apartmentPreviewContent.classList.remove('d-none');
+                        
+                        if (data.error) {
+                            apartmentPreviewContent.innerHTML = `
+                                <div class="alert alert-danger">
+                                    <p>${data.error}</p>
+                                </div>
+                            `;
+                            return;
+                        }
+                        
+                        // Set content
+                        const preview = data.preview;
+                        
+                        // Create a table of matches
+                        let matchesHtml = '';
+                        if (preview.matches && preview.matches.length > 0) {
+                            matchesHtml = `
+                                <h5 class="mt-3">Matches</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Match ID</th>
+                                                <th>From</th>
+                                                <th>To</th>
+                                                <th>Size (mm)</th>
+                                                <th>Type</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                            `;
+                            
+                            preview.matches.forEach(match => {
+                                let rowClass = '';
+                                if (match.Match_Type === 'Same Apartment') {
+                                    rowClass = 'table-primary';
+                                } else if (match.Match_Type === 'Cross Apartment') {
+                                    rowClass = 'table-secondary';
+                                } else if (match.Match_Type === 'Inventory') {
+                                    rowClass = 'table-success';
+                                }
+                                
+                                matchesHtml += `
+                                    <tr class="${rowClass}">
+                                        <td>${match.Match_ID || ''}</td>
+                                        <td>${match.From || ''}</td>
+                                        <td>${match.To || ''}</td>
+                                        <td>${match.Size_mm || ''} mm</td>
+                                        <td>${match.Match_Type || ''}</td>
+                                    </tr>
+                                `;
+                            });
+                            
+                            matchesHtml += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `;
+                        } else {
+                            matchesHtml = `
+                                <div class="alert alert-info mt-3">
+                                    <p>No matches found for this apartment.</p>
+                                </div>
+                            `;
+                        }
+                        
+                        // Build the full preview
+                        apartmentPreviewContent.innerHTML = `
+                            <h4>Apartment ${apartment}</h4>
+                            <p>This is a preview of the data that will be included in the apartment report.</p>
+                            ${matchesHtml}
+                            <div class="alert alert-info mt-3">
+                                <p>For a complete, formatted report with all details, download the full report.</p>
+                            </div>
+                        `;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        document.querySelector('#apartmentPreviewModal .spinner-border').classList.add('d-none');
+                        apartmentPreviewContent.classList.remove('d-none');
+                        
+                        apartmentPreviewContent.innerHTML = `
+                            <div class="alert alert-danger">
+                                <p>An error occurred while loading the apartment preview.</p>
+                            </div>
+                        `;
+                    });
+            });
+        });
+        
+        // Handle apartment download button
+        downloadApartmentBtn.addEventListener('click', function() {
+            const apartment = this.getAttribute('data-apartment');
+            window.location.href = `/step9/download_report?type=apartment&apartment=${apartment}`;
+        });
+    });
+</script>
+<style>
+    .card {
+        margin-bottom: 1.5rem;
+    }
+    
+    .list-group-item {
+        transition: all 0.2s;
+    }
+    
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .table-responsive {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .spinner-border {
+        display: block;
+        margin: 2rem auto;
+    }
+</style>
+{% endblock %}

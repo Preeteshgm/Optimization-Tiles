@@ -1,0 +1,12 @@
+# If using venv or virtualenv
+# Navigate to your project directory first
+cd path\to\your\project
+
+# Activate the virtual environment
+venv\Scripts\activate
+
+python app.py
+python run_server.py
+
+deactivate
+

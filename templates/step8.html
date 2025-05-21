@@ -1,0 +1,1049 @@
+{% extends "index.html" %}
+
+{% block progress_width %}100%{% endblock %}
+{% block progress_value %}100{% endblock %}
+{% block progress_text %}Step 8: Optimize{% endblock %}
+
+{% block step1_active %}completed{% endblock %}
+{% block step2_active %}completed{% endblock %}
+{% block step3_active %}completed{% endblock %}
+{% block step4_active %}completed{% endblock %}
+{% block step5_active %}completed{% endblock %}
+{% block step6_active %}completed{% endblock %}
+{% block step7_active %}completed{% endblock %}
+{% block step8_active %}active{% endblock %}
+
+{% block head_extra %}
+<!-- Add Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Step 8: Cut Piece Optimization</h2>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info mb-4">
+            <div class="d-flex">
+                <div class="flex-shrink-0 me-3">
+                    <i class="bi bi-info-circle-fill fs-3"></i>
+                </div>
+                <div>
+                    <p class="mb-0">Optimize cut piece usage across apartments and with inventory to minimize waste and maximize efficiency.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Left side: Configuration panel -->
+            <div class="col-md-5">
+                <!-- Initial configuration panel -->
+                <div id="configPanel">
+                    <div class="card mb-4">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Optimization Settings</h5>
+                            <span class="badge bg-primary">Settings</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="optimizationForm">
+                                <!-- Apartment selection -->
+                                <div class="mb-3">
+                                    <label class="form-label">Select Apartments to Include:</label>
+                                    <div id="apartmentSelector" class="border p-3 rounded mb-2" style="max-height: 200px; overflow-y: auto;">
+                                        {% for apartment in apartments %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="apt_{{ apartment }}" name="selected_apartments" value="{{ apartment }}" checked>
+                                            <label class="form-check-label" for="apt_{{ apartment }}">{{ apartment }}</label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="selectAllBtn">Select All</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllBtn">Deselect All</button>
+                                    </div>
+                                    <div class="form-text">Select at least two apartments to enable cross-apartment optimization.</div>
+                                </div>
+                                
+                                <!-- Pattern based classification -->
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="usePattern" name="use_pattern" {% if has_pattern %}checked{% endif %} disabled>
+                                        <label class="form-check-label" for="usePattern">
+                                            {% if has_pattern %}Using pattern-based classification (X/Y cuts){% else %}Using flat tile classification (all cuts){% endif %}
+                                        </label>
+                                    </div>
+                                    <div class="form-text">This setting is determined by your choice in Step 5.</div>
+                                </div>
+                                
+                                <!-- Tolerance settings -->
+                                <div class="mb-3">
+                                    <label for="minGapTolerance" class="form-label">Minimum Gap Tolerance (mm)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="minGapTolerance" name="min_gap_tolerance" value="2" min="0" max="10" step="0.5">
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                    <div class="form-text">
+                                        The minimum acceptable gap between required cut size and available piece size.
+                                    </div>
+                                </div>
+                                
+                                <!-- Progressive tolerance -->
+                                <div class="mb-3">
+                                    <label for="maxGapTolerance" class="form-label">Maximum Gap Tolerance (mm)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="maxGapTolerance" name="max_gap_tolerance" value="80" min="10" max="150" step="10">
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                    <div class="form-text">
+                                        The system will progressively search for matches with increasing tolerance up to this value.
+                                    </div>
+                                </div>
+                                
+                                <!-- Additional options -->
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="prioritizeSameApartment" name="prioritize_same_apartment" checked>
+                                        <label class="form-check-label" for="prioritizeSameApartment">
+                                            Prioritize within-apartment matches
+                                        </label>
+                                    </div>
+                                    <div class="form-text">
+                                        When checked, the system will prefer matching within the same apartment, even if it results in slightly more waste.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="useInventory" name="use_inventory">
+                                        <label class="form-check-label" for="useInventory">
+                                            Include inventory in optimization
+                                        </label>
+                                    </div>
+                                    <div class="form-text">
+                                        When checked, the system will also match cut pieces with available inventory pieces.
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary w-100" id="runOptimizationBtn">
+                                    <span class="spinner-border spinner-border-sm d-none" id="optimizationSpinner" role="status" aria-hidden="true"></span>
+                                    Run Optimization
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Optimization process explanation -->
+                    <div class="accordion" id="optimizationProcessAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#optimizationProcessCollapse">
+                                    <i class="bi bi-info-circle me-2"></i> How the Optimization Works
+                                </button>
+                            </h2>
+                            <div id="optimizationProcessCollapse" class="accordion-collapse collapse" data-bs-parent="#optimizationProcessAccordion">
+                                <div class="accordion-body">
+                                    <p>The optimization algorithm uses progressive tolerance matching to find the best possible matches between remaining pieces and required cuts:</p>
+                                    <ol>
+                                        <li>First, it splits cut pieces into "Less than Half" and "More than Half" categories</li>
+                                        <li>It then tries to match remaining pieces from small cuts with inventory (if enabled)</li>
+                                        <li>Next, it looks for matches <strong>within the same apartment</strong> for any unmatched pieces</li>
+                                        <li>Finally, it searches for matches <strong>across different apartments</strong> for remaining pieces</li>
+                                        <li>The algorithm prioritizes matches that result in the <strong>least amount of waste</strong></li>
+                                        <li>Matches consider the <strong>orientation constraints</strong> (X/Y cuts) to ensure correct placement</li>
+                                    </ol>
+                                    <p class="text-muted fst-italic">Note: Matches are color-coded in the results for easy identification. Same-apartment matches use unique colors, cross-apartment matches use gray, and inventory matches use green.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Results summary -->
+                <div id="resultsSummary" class="d-none">
+                    <div class="card mb-4">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Optimization Results</h5>
+                            <span class="badge bg-success">Summary</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-4">
+                                <div class="col-6">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <div class="fs-1 text-primary fw-bold" id="matchedCount">0</div>
+                                            <p class="text-muted mb-0">Matched Pieces</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <div class="fs-1 text-primary fw-bold" id="materialSaved">0</div>
+                                            <p class="text-muted mb-0">Material Saved (mm²)</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6>Match Types:</h6>
+                                <div class="d-flex justify-content-between">
+                                    <span>Within-apartment matches:</span>
+                                    <span class="fw-bold" id="withinAptMatches">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Cross-apartment matches:</span>
+                                    <span class="fw-bold" id="crossAptMatches">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Inventory matches:</span>
+                                    <span class="fw-bold" id="inventoryMatches">0</span>
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary w-100" id="viewMatchDetailsBtn">
+                                View Match Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Inventory management section -->
+                <div id="inventorySection" class="card mt-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Inventory Management</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Upload or create an inventory of remaining pieces to include in optimization:</p>
+                        
+                        <form id="inventoryForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="inventoryFile" class="form-label">Upload Inventory File</label>
+                                <input class="form-control" type="file" id="inventoryFile" name="inventory_file" accept=".xlsx,.csv">
+                                <div class="form-text">Upload an Excel file with your remaining piece inventory.</div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary" id="uploadInventoryBtn">
+                                    <span class="spinner-border spinner-border-sm d-none" id="uploadSpinner" role="status" aria-hidden="true"></span>
+                                    <i class="bi bi-upload me-2"></i>Upload Inventory
+                                </button>
+                                <a href="{{ url_for('create_inventory_template_route') }}" class="btn btn-outline-secondary" id="createInventoryTemplateBtn">
+                                    <i class="bi bi-file-earmark-plus me-2"></i>Create Inventory Template
+                                </a>
+                            </div>
+                        </form>
+                        
+                        <!-- Inventory status indicator -->
+                        <div id="inventoryStatus" class="alert alert-info mt-3 d-none">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0 me-3">
+                                    <i class="bi bi-info-circle"></i>
+                                </div>
+                                <div id="inventoryStatusText">
+                                    No inventory uploaded yet.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <p class="fw-bold mb-1">Expected file format:</p>
+                            <ul class="small">
+                                {% if has_pattern %}
+                                <li>Excel file (.xlsx) with separate sheets for "Cut X" and "Cut Y" remaining pieces</li>
+                                <li>Each sheet should have columns: "Remaining Size (mm)", "Location", "Count"</li>
+                                {% else %}
+                                <li>Excel file (.xlsx) with a sheet named "All Cut" for remaining pieces</li>
+                                <li>Sheet should have columns: "Remaining Size (mm)", "Location", "Count"</li>
+                                {% endif %}
+                                <li>A sample template can be downloaded using the button above</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right side: Results panel -->
+            <div class="col-md-7">
+                <!-- Initial placeholder content -->
+                <div id="initialPlaceholder" class="card">
+                    <div class="card-body">
+                        <div class="text-center py-5">
+                            <div class="display-1 text-muted mb-4">
+                                <i class="bi bi-clipboard-data"></i>
+                            </div>
+                            <h4>Cut Piece Optimization</h4>
+                            <p class="text-muted">Configure optimization settings and click "Run Optimization" to begin the process.</p>
+                            <p class="text-muted">The optimization will identify opportunities for reusing cut pieces within and across apartments.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Optimization visualization -->
+                <div id="optimizationPlot" class="card mt-4 d-none">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Optimization Visualization</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <!-- Visualization will be shown here -->
+                    </div>
+                </div>
+                
+                <!-- Matches table (hidden initially) -->
+                <div id="matchesContainer" class="card mt-4 d-none">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Match Details</h5>
+                        <button type="button" class="btn-close" id="closeMatchesBtn" aria-label="Close"></button>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filter controls -->
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="filterSameApt" checked>
+                                    <label class="form-check-label" for="filterSameApt">Same Apartment</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="filterCrossApt" checked>
+                                    <label class="form-check-label" for="filterCrossApt">Cross Apartment</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="filterInventory" checked>
+                                    <label class="form-check-label" for="filterInventory">Inventory</label>
+                                </div>
+                            </div>
+                            <div class="input-group" style="width: 200px;">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="searchMatches" placeholder="Search...">
+                            </div>
+                        </div>
+                        
+                        <!-- Small note about highlighting -->
+                        <div class="alert alert-info small mb-3">
+                            <p class="mb-0"><strong>Note:</strong> Same-apartment matches are highlighted with unique colors. Cross-apartment matches are gray, and inventory matches are green.</p>
+                        </div>
+                        
+                        {% if has_pattern %}
+                        <!-- Direction tabs for pattern-based matching -->
+                        <ul class="nav nav-tabs mb-3" id="directionTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="x-direction-tab" data-bs-toggle="tab" data-bs-target="#x-direction" type="button" role="tab" aria-controls="x-direction" aria-selected="true">X Direction</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="y-direction-tab" data-bs-toggle="tab" data-bs-target="#y-direction" type="button" role="tab" aria-controls="y-direction" aria-selected="false">Y Direction</button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="directionTabContent">
+                            <!-- X Direction Tab -->
+                            <div class="tab-pane fade show active" id="x-direction" role="tabpanel" aria-labelledby="x-direction-tab">
+                                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                    <table class="table table-hover" id="xMatchesTable">
+                                        <thead class="sticky-top bg-white">
+                                            <tr>
+                                                <th>Match ID</th>
+                                                <th>From</th>
+                                                <th>To</th>
+                                                <th>Size (mm)</th>
+                                                <th>Waste (mm)</th>
+                                                <th>Match Type</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="xMatchesTableBody">
+                                            <!-- X direction matches will be added here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Y Direction Tab -->
+                            <div class="tab-pane fade" id="y-direction" role="tabpanel" aria-labelledby="y-direction-tab">
+                                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                    <table class="table table-hover" id="yMatchesTable">
+                                        <thead class="sticky-top bg-white">
+                                            <tr>
+                                                <th>Match ID</th>
+                                                <th>From</th>
+                                                <th>To</th>
+                                                <th>Size (mm)</th>
+                                                <th>Waste (mm)</th>
+                                                <th>Match Type</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="yMatchesTableBody">
+                                            <!-- Y direction matches will be added here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <!-- All cut matches table for flat classification -->
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-hover" id="matchesTable">
+                                <thead class="sticky-top bg-white">
+                                    <tr>
+                                        <th>Match ID</th>
+                                        <th>From</th>
+                                        <th>To</th>
+                                        <th>Size (mm)</th>
+                                        <th>Waste (mm)</th>
+                                        <th>Match Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="matchesTableBody">
+                                    <!-- Matches will be added here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Unmatched pieces summary (initially hidden) -->
+                <div id="unmatchedSection" class="card mt-4 d-none">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Unmatched Pieces Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if has_pattern %}
+                        <!-- Pattern-based tabs for unmatched pieces -->
+                        <ul class="nav nav-tabs mb-3" id="unmatchedTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="x-unmatched-tab" data-bs-toggle="tab" data-bs-target="#x-unmatched" type="button" role="tab" aria-controls="x-unmatched" aria-selected="true">X Direction</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="y-unmatched-tab" data-bs-toggle="tab" data-bs-target="#y-unmatched" type="button" role="tab" aria-controls="y-unmatched" aria-selected="false">Y Direction</button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="unmatchedTabContent">
+                            <!-- X Direction Unmatched -->
+                            <div class="tab-pane fade show active" id="x-unmatched" role="tabpanel" aria-labelledby="x-unmatched-tab">
+                                <div class="table-responsive">
+                                    <table class="table table-sm" id="xUnmatchedTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Apartment</th>
+                                                <th>Location</th>
+                                                <th>Size (mm)</th>
+                                                <th>Type</th>
+                                                <th>Count</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="xUnmatchedTableBody">
+                                            <!-- X direction unmatched pieces will be added here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Y Direction Unmatched -->
+                            <div class="tab-pane fade" id="y-unmatched" role="tabpanel" aria-labelledby="y-unmatched-tab">
+                                <div class="table-responsive">
+                                    <table class="table table-sm" id="yUnmatchedTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Apartment</th>
+                                                <th>Location</th>
+                                                <th>Size (mm)</th>
+                                                <th>Type</th>
+                                                <th>Count</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="yUnmatchedTableBody">
+                                            <!-- Y direction unmatched pieces will be added here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <!-- All cut unmatched pieces for flat classification -->
+                        <div class="table-responsive">
+                            <table class="table table-sm" id="unmatchedTable">
+                                <thead>
+                                    <tr>
+                                        <th>Apartment</th>
+                                        <th>Location</th>
+                                        <th>Size (mm)</th>
+                                        <th>Type</th>
+                                        <th>Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="unmatchedTableBody">
+                                    <!-- Unmatched pieces will be added here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Error and success alerts -->
+        <div class="alert alert-danger mt-3 d-none" id="errorAlert"></div>
+        <div class="alert alert-success mt-3 d-none" id="successAlert"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block prev_step %}
+<a href="{{ url_for('step7') }}" class="btn btn-secondary">Previous: Export</a>
+{% endblock %}
+
+{% block next_step %}
+<a href="{{ url_for('step9') }}" class="btn btn-primary" id="nextButton">Next: Export Reports</a>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/OptimizationProcessor.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elements
+        const optimizationForm = document.getElementById('optimizationForm');
+        const runOptimizationBtn = document.getElementById('runOptimizationBtn');
+        const optimizationSpinner = document.getElementById('optimizationSpinner');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const deselectAllBtn = document.getElementById('deselectAllBtn');
+        const errorAlert = document.getElementById('errorAlert');
+        const successAlert = document.getElementById('successAlert');
+        const initialPlaceholder = document.getElementById('initialPlaceholder');
+        const resultsSummary = document.getElementById('resultsSummary');
+        const unmatchedSection = document.getElementById('unmatchedSection');
+        const matchesContainer = document.getElementById('matchesContainer');
+        const viewMatchDetailsBtn = document.getElementById('viewMatchDetailsBtn');
+        const closeMatchesBtn = document.getElementById('closeMatchesBtn');
+        const filterSameApt = document.getElementById('filterSameApt');
+        const filterCrossApt = document.getElementById('filterCrossApt');
+        const filterInventory = document.getElementById('filterInventory');
+        const searchMatches = document.getElementById('searchMatches');
+        const inventorySection = document.getElementById('inventorySection');
+        const optimizationPlot = document.getElementById('optimizationPlot');
+        const uploadInventoryBtn = document.getElementById('uploadInventoryBtn');
+        const createInventoryTemplateBtn = document.getElementById('createInventoryTemplateBtn');
+        const inventoryStatus = document.getElementById('inventoryStatus');
+        const inventoryStatusText = document.getElementById('inventoryStatusText');
+        const uploadSpinner = document.getElementById('uploadSpinner');
+        const useInventory = document.getElementById('useInventory');
+        
+        // Define optimal tolerances array
+        const defaultToleranceRanges = [10, 20, 40, 60, 80, 100];
+        
+        // Define colors for match types
+        const SAME_APT_COLORS = [
+            '#FFD700', '#FFA500', '#FF6347', '#FF1493', '#9932CC', 
+            '#4169E1', '#00BFFF', '#00FA9A', '#ADFF2F', '#FFD700'
+        ];  // Multiple colors for same apartment matches
+        const DIFF_APT_COLOR = '#A9A9A9';  // Gray for different apartment matches
+        const INV_COLOR = '#8FBC8F';       // Green for inventory matches
+        
+        // Format number with commas
+        function formatNumber(num) {
+            return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+        }
+        
+        // Format area
+        function formatArea(area) {
+            if (area < 10000) {
+                return formatNumber(Math.round(area)) + ' mm²';
+            } else {
+                return (area / 1000000).toFixed(2) + ' m²';
+            }
+        }
+        
+        // Toggle accordion button functionality
+        const accordionButtons = document.querySelectorAll('.accordion-button');
+        accordionButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const target = document.querySelector(this.getAttribute('data-bs-target'));
+                if (target) {
+                    if (target.classList.contains('show')) {
+                        target.classList.remove('show');
+                        this.classList.add('collapsed');
+                    } else {
+                        target.classList.add('show');
+                        this.classList.remove('collapsed');
+                    }
+                }
+            });
+        });
+        
+        // Handle select/deselect all buttons
+        selectAllBtn.addEventListener('click', function() {
+            document.querySelectorAll('input[name="selected_apartments"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        });
+        
+        deselectAllBtn.addEventListener('click', function() {
+            document.querySelectorAll('input[name="selected_apartments"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        });
+        
+        // View match details button
+        if (viewMatchDetailsBtn) {
+            viewMatchDetailsBtn.addEventListener('click', function() {
+                initialPlaceholder.classList.add('d-none');
+                matchesContainer.classList.remove('d-none');
+            });
+        }
+        
+        // Close matches button
+        if (closeMatchesBtn) {
+            closeMatchesBtn.addEventListener('click', function() {
+                matchesContainer.classList.add('d-none');
+            });
+        }
+        
+        // Form submission for optimization
+        optimizationForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading indicators
+            runOptimizationBtn.disabled = true;
+            optimizationSpinner.classList.remove('d-none');
+            errorAlert.classList.add('d-none');
+            successAlert.classList.add('d-none');
+            
+            // Hide initial placeholder
+            initialPlaceholder.classList.add('d-none');
+            
+            // Hide results until complete
+            resultsSummary.classList.add('d-none');
+            
+            // Get form data
+            const minGapTolerance = parseFloat(document.getElementById('minGapTolerance').value);
+            const maxGapTolerance = parseFloat(document.getElementById('maxGapTolerance').value);
+            const prioritizeSameApartment = document.getElementById('prioritizeSameApartment').checked;
+            const useInventoryValue = document.getElementById('useInventory').checked;
+            
+            // Get selected apartments
+            const selectedApartments = [];
+            document.querySelectorAll('input[name="selected_apartments"]:checked').forEach(checkbox => {
+                selectedApartments.push(checkbox.value);
+            });
+            
+            // Check if at least two apartments are selected
+            if (selectedApartments.length < 2) {
+                errorAlert.textContent = 'Please select at least two apartments for optimization.';
+                errorAlert.classList.remove('d-none');
+                runOptimizationBtn.disabled = false;
+                optimizationSpinner.classList.add('d-none');
+                initialPlaceholder.classList.remove('d-none');
+                return;
+            }
+            
+            // Prepare request data
+            const requestData = {
+                min_tolerance: minGapTolerance,
+                max_tolerance: maxGapTolerance,
+                use_inventory: useInventoryValue,
+                prioritize_same_apartment: prioritizeSameApartment,
+                selected_apartments: selectedApartments
+            };
+            
+            // Run the full optimization process
+            fetch('/step8/full_process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Reset loading indicators
+                runOptimizationBtn.disabled = false;
+                optimizationSpinner.classList.add('d-none');
+                
+                if (data.error) {
+                    // Show error
+                    errorAlert.textContent = data.error;
+                    errorAlert.classList.remove('d-none');
+                    initialPlaceholder.classList.remove('d-none');
+                    return;
+                }
+                
+                // Success! Show results
+                successAlert.innerHTML = '<strong>Success!</strong> The optimization process completed successfully.';
+                successAlert.classList.remove('d-none');
+                
+                // Show results
+                resultsSummary.classList.remove('d-none');
+                unmatchedSection.classList.remove('d-none');
+                
+                // Get results
+                const results = data.results;
+                
+                // Update summary numbers
+                document.getElementById('matchedCount').textContent = results.matched_count || 0;
+                document.getElementById('materialSaved').textContent = formatNumber(results.total_savings || 0);
+                document.getElementById('withinAptMatches').textContent = results.within_apartment_matches || 0;
+                document.getElementById('crossAptMatches').textContent = results.cross_apartment_matches || 0;
+                document.getElementById('inventoryMatches').textContent = results.inventory_matches || 0;
+                
+                // Show visualization if available
+                if (results.optimization_plot) {
+                    optimizationPlot.innerHTML = `
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Optimization Visualization</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <img src="data:image/png;base64,${results.optimization_plot}" class="img-fluid" alt="Optimization Visualization">
+                        </div>
+                    `;
+                    optimizationPlot.classList.remove('d-none');
+                }
+                
+                // Process match tables based on pattern mode
+                const hasPattern = results.has_pattern;
+                
+                if (hasPattern) {
+                    // Pattern mode - X and Y direction
+                    if (results.x_matches && results.x_matches.length > 0) {
+                        updateMatchTable('xMatchesTableBody', results.x_matches);
+                    }
+                    
+                    if (results.y_matches && results.y_matches.length > 0) {
+                        updateMatchTable('yMatchesTableBody', results.y_matches);
+                    }
+                    
+                    // Update unmatched tables
+                    updateUnmatchedTable('xUnmatchedTableBody', results.x_unmatched_less || [], 'Less than Half');
+                    updateUnmatchedTable('xUnmatchedTableBody', results.x_unmatched_more || [], 'More than Half');
+                    updateUnmatchedTable('yUnmatchedTableBody', results.y_unmatched_less || [], 'Less than Half');
+                    updateUnmatchedTable('yUnmatchedTableBody', results.y_unmatched_more || [], 'More than Half');
+                } else {
+                    // No pattern mode - All directions
+                    if (results.all_matches && results.all_matches.length > 0) {
+                        updateMatchTable('matchesTableBody', results.all_matches);
+                    }
+                    
+                    // Update unmatched tables
+                    updateUnmatchedTable('unmatchedTableBody', results.all_unmatched_less || [], 'Less than Half');
+                    updateUnmatchedTable('unmatchedTableBody', results.all_unmatched_more || [], 'More than Half');
+                }
+                
+                // Apply filters to match tables
+                filterMatches();
+                
+                // Scroll to results
+                resultsSummary.scrollIntoView({behavior: 'smooth'});
+            })
+            .catch(error => {
+                // Reset loading indicators
+                runOptimizationBtn.disabled = false;
+                optimizationSpinner.classList.add('d-none');
+                
+                // Show error
+                errorAlert.textContent = 'An error occurred during optimization. Please try again.';
+                errorAlert.classList.remove('d-none');
+                initialPlaceholder.classList.remove('d-none');
+                console.error('Error:', error);
+            });
+        });
+
+        // Add a row to the matches tables
+        function updateMatchTable(tableId, matches) {
+            const tableBody = document.getElementById(tableId);
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = '';
+            
+            matches.forEach(match => {
+                const row = document.createElement('tr');
+                
+                // Determine match type and color
+                let matchType = match['Match Type'] || '';
+                let color = '';
+                
+                if (matchType === 'Inventory') {
+                    color = INV_COLOR;
+                    row.dataset.type = 'inventory';
+                } else if (matchType === 'Same Apartment') {
+                    // Extract number from match_id (X1, Y2, etc.)
+                    const match_id = match['Match ID'] || '';
+                    const match_num = parseInt(match_id.replace(/\D/g, '')) || 1;
+                    color = SAME_APT_COLORS[(match_num - 1) % SAME_APT_COLORS.length];
+                    row.dataset.type = 'same';
+                } else { // Cross Apartment
+                    color = DIFF_APT_COLOR;
+                    row.dataset.type = 'cross';
+                }
+                
+                // Create the row content
+                row.innerHTML = `
+                    <td><strong>${match['Match ID'] || ''}</strong></td>
+                    <td>${match['From'] || ''}</td>
+                    <td>${match['To'] || ''}</td>
+                    <td>${match['Size (mm)'] || 0} mm</td>
+                    <td>${match['Waste (mm)'] || 0} mm</td>
+                    <td>${matchType}</td>
+                `;
+                
+                // Set row style
+                row.style.backgroundColor = color + '40';  // Add transparency
+                
+                // Add to table
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Add unmatched piece row
+        function updateUnmatchedTable(tableId, unmatchedPieces, pieceType) {
+            const tableBody = document.getElementById(tableId);
+            if (!tableBody) return;
+            
+            unmatchedPieces.forEach(piece => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${piece['Apartment'] || ''}</td>
+                    <td>${piece['Location'] || ''}</td>
+                    <td>${piece['Cut Size (mm)'] || 0} mm</td>
+                    <td>${pieceType}</td>
+                    <td>${piece['Count'] || 1}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Function to render a colored match table
+        function renderColoredMatchTable(tableId, matches) {
+            const tableBody = document.getElementById(tableId);
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = '';
+            
+            matches.forEach(match => {
+                const row = document.createElement('tr');
+                
+                // Determine match type and color
+                let matchType = match['Match Type'] || '';
+                let color = '';
+                
+                if (matchType === 'Inventory' || match['Match ID'].startsWith('I') || match['Match ID'].startsWith('IX') || match['Match ID'].startsWith('IY')) {
+                    color = '#8FBC8F'; // Green for inventory
+                    row.dataset.type = 'inventory';
+                } else if (matchType === 'Same Apartment' || 
+                        (match['Match ID'].startsWith('X') && !match['Match ID'].startsWith('OX')) || 
+                        (match['Match ID'].startsWith('Y') && !match['Match ID'].startsWith('OY'))) {
+                    // Extract number from match_id (X1, Y2, etc.)
+                    const match_id = match['Match ID'] || '';
+                    const match_num = parseInt(match_id.replace(/\D/g, '')) || 1;
+                    const sameAptColors = [
+                        '#FFD700', '#FFA500', '#FF6347', '#FF1493', '#9932CC', 
+                        '#4169E1', '#00BFFF', '#00FA9A', '#ADFF2F', '#FFD700'
+                    ];
+                    color = sameAptColors[(match_num - 1) % sameAptColors.length];
+                    row.dataset.type = 'same';
+                } else { // Cross Apartment
+                    color = '#A9A9A9'; // Gray
+                    row.dataset.type = 'cross';
+                }
+                
+                // Create the row content with colored Group ID cell
+                row.innerHTML = `
+                    <td><strong>${match['Match ID'] || ''}</strong></td>
+                    <td>${match['From'] || ''}</td>
+                    <td>${match['To'] || ''}</td>
+                    <td>${match['Size (mm)'] || 0} mm</td>
+                    <td>${match['Waste (mm)'] || 0} mm</td>
+                    <td>${matchType}</td>
+                `;
+                
+                // Apply background color to the Group ID cell (first cell with the Match ID)
+                row.cells[0].style.backgroundColor = color + '80';  // Add transparency
+                
+                // Add to table
+                tableBody.appendChild(row);
+            });
+        }
+
+
+        // Filter matches
+        function filterMatches() {
+            const showSame = filterSameApt ? filterSameApt.checked : true;
+            const showCross = filterCrossApt ? filterCrossApt.checked : true;
+            const showInventory = filterInventory ? filterInventory.checked : true;
+            const searchTerm = searchMatches ? searchMatches.value.toLowerCase() : '';
+            
+            // Filter function for rows
+            const filterRow = (row) => {
+                const rowType = row.dataset.type;
+                const shouldShowType = 
+                    (rowType === 'same' && showSame) || 
+                    (rowType === 'cross' && showCross) ||
+                    (rowType === 'inventory' && showInventory);
+                
+                const rowText = row.textContent.toLowerCase();
+                const matchesSearch = searchTerm === '' || rowText.includes(searchTerm);
+                
+                row.style.display = shouldShowType && matchesSearch ? '' : 'none';
+            };
+            
+            // Apply filters to appropriate tables
+            const xMatchesTableBody = document.getElementById('xMatchesTableBody');
+            const yMatchesTableBody = document.getElementById('yMatchesTableBody');
+            const matchesTableBody = document.getElementById('matchesTableBody');
+            
+            if (xMatchesTableBody) {
+                document.querySelectorAll('#xMatchesTableBody tr').forEach(filterRow);
+            }
+            
+            if (yMatchesTableBody) {
+                document.querySelectorAll('#yMatchesTableBody tr').forEach(filterRow);
+            }
+            
+            if (matchesTableBody) {
+                document.querySelectorAll('#matchesTableBody tr').forEach(filterRow);
+            }
+        }
+        
+        // Add event listeners for filters
+        if (filterSameApt) filterSameApt.addEventListener('change', filterMatches);
+        if (filterCrossApt) filterCrossApt.addEventListener('change', filterMatches);
+        if (filterInventory) filterInventory.addEventListener('change', filterMatches);
+        if (searchMatches) searchMatches.addEventListener('input', filterMatches);
+        
+        // Handle inventory form submission
+        const inventoryForm = document.getElementById('inventoryForm');
+        if (inventoryForm) {
+            inventoryForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Check if file is selected
+                const inventoryFile = document.getElementById('inventoryFile');
+                if (!inventoryFile.files || inventoryFile.files.length === 0) {
+                    errorAlert.textContent = 'Please select an inventory file to upload.';
+                    errorAlert.classList.remove('d-none');
+                    return;
+                }
+                
+                // Show loading state
+                uploadInventoryBtn.disabled = true;
+                uploadSpinner.classList.remove('d-none');
+                errorAlert.classList.add('d-none');
+                
+                // Create FormData object
+                const formData = new FormData(inventoryForm);
+                
+                // Send to server
+                fetch('/step8/upload_inventory', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading state
+                    uploadInventoryBtn.disabled = false;
+                    uploadSpinner.classList.add('d-none');
+                    
+                    if (data.error) {
+                        // Show error
+                        errorAlert.textContent = data.error;
+                        errorAlert.classList.remove('d-none');
+                    } else {
+                        // Show success
+                        successAlert.innerHTML = '<strong>Success!</strong> ' + (data.message || 'Inventory file uploaded successfully.');
+                        successAlert.classList.remove('d-none');
+                        
+                        // Enable inventory checkbox and set it checked
+                        useInventory.checked = true;
+                        useInventory.disabled = false;
+                        
+                        // Update inventory status
+                        inventoryStatus.classList.remove('d-none');
+                        inventoryStatus.classList.remove('alert-info');
+                        inventoryStatus.classList.add('alert-success');
+                        inventoryStatusText.innerHTML = '<strong>Inventory loaded:</strong> ' + inventoryFile.files[0].name + ' (' + data.inventory_count + ' pieces)';
+                        
+                        // Scroll to success message
+                        successAlert.scrollIntoView({ behavior: 'smooth' });
+                    }
+                })
+                .catch(error => {
+                    // Hide loading state
+                    uploadInventoryBtn.disabled = false;
+                    uploadSpinner.classList.add('d-none');
+                    
+                    // Show error
+                    errorAlert.textContent = 'An error occurred: ' + error.message;
+                    errorAlert.classList.remove('d-none');
+                });
+            });
+        }
+    });
+</script>
+<style>
+    /* Customize scrollbars */
+    .table-responsive::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+    
+    /* Sticky table header */
+    .sticky-top.bg-white {
+        z-index: 1020;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    /* Animation for success alert */
+    .alert-success:not(.d-none) {
+        animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Card hover effect */
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    /* Table row hover */
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,0,0,0.075);
+    }
+    
+    /* Nav tabs styling */
+    .nav-tabs .nav-link {
+        color: #495057;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #007bff;
+        font-weight: 500;
+    }
+    
+    /* Match ID styling */
+    td strong {
+        letter-spacing: 0.5px;
+    }
+</style>
+{% endblock %}

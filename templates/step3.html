@@ -1,0 +1,458 @@
+{% extends "index.html" %}
+
+{% block progress_width_value %}42{% endblock %}
+{% block progress_value %}42{% endblock %}
+{% block progress_text %}Step 3: Set Orientation{% endblock %}
+
+{% block step1_active %}completed{% endblock %}
+{% block step2_active %}completed{% endblock %}
+{% block step3_active %}active{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Step 3: Set Apartment Orientation</h2>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info mb-3">
+            <p class="mb-0"><i class="bi bi-info-circle-fill me-2"></i>Set the orientation for each apartment (0° or 90°). This determines how tiles will be placed.</p>
+        </div>
+        
+        <!-- Three-column layout: Orientations, Layout, Current -->
+        <div class="row mb-4">
+            <!-- Column 1: Apartment Orientations -->
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h4 class="m-0 fs-5">Apartment Orientations</h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="orientationForm">
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Apartment</th>
+                                            <th>Orientation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="apartmentOrientationList">
+                                        <!-- Will be filled by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary mt-3 w-100" id="saveButton">
+                                <span class="spinner-border spinner-border-sm d-none" id="saveSpinner" role="status" aria-hidden="true"></span>
+                                Save Orientations
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Column 2: Apartment Layout -->
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h4 class="m-0 fs-5">Apartment Layout</h4>
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center">
+                        <div id="layoutPlot" class="text-center">
+                            {% if cluster_plot %}
+                            <img src="data:image/png;base64,{{ cluster_plot }}" alt="Apartment Clusters" class="img-fluid">
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                No layout reference available. Please complete previous steps first.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Column 3: Current Orientations -->
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h4 class="m-0 fs-5">Current Orientations</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Apartment</th>
+                                        <th>Preview</th>
+                                        <th>Current</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="previewTable">
+                                    <!-- Will be filled by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bottom: Orientation Guide & Tips -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h4 class="m-0 fs-5">Orientation Guide & Tips</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- 0° Orientation Information -->
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <svg width="100" height="100" viewBox="0 0 200 200">
+                                    <rect x="10" y="10" width="180" height="180" fill="#f8f9fa" stroke="#000" stroke-width="2"/>
+                                    <rect x="20" y="20" width="70" height="70" fill="#007bff" stroke="#000" stroke-width="1"/>
+                                    <rect x="110" y="20" width="70" height="70" fill="#007bff" stroke="#000" stroke-width="1"/>
+                                    <rect x="20" y="110" width="70" height="70" fill="#007bff" stroke="#000" stroke-width="1"/>
+                                    <rect x="110" y="110" width="70" height="70" fill="#007bff" stroke="#000" stroke-width="1"/>
+                                </svg>
+                                <div class="mt-2">
+                                    <span class="badge bg-primary px-3 py-1">0° Orientation</span>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <h6 class="mb-2 text-primary">When to use 0° orientation:</h6>
+                                <ul class="small">
+                                    <li>Square or rectangular rooms with straight walls</li>
+                                    <li>When you want tiles to align with majority of walls</li>
+                                    <li>For consistent alignment across connected spaces</li>
+                                    <li>When using patterned tiles that need specific orientation</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 90° Orientation Information -->
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <svg width="100" height="100" viewBox="0 0 200 200">
+                                    <rect x="10" y="10" width="180" height="180" fill="#f8f9fa" stroke="#000" stroke-width="2"/>
+                                    <rect x="20" y="20" width="70" height="70" fill="#28a745" stroke="#000" stroke-width="1" transform="rotate(90, 55, 55)"/>
+                                    <rect x="110" y="20" width="70" height="70" fill="#28a745" stroke="#000" stroke-width="1" transform="rotate(90, 145, 55)"/>
+                                    <rect x="20" y="110" width="70" height="70" fill="#28a745" stroke="#000" stroke-width="1" transform="rotate(90, 55, 145)"/>
+                                    <rect x="110" y="110" width="70" height="70" fill="#28a745" stroke="#000" stroke-width="1" transform="rotate(90, 145, 145)"/>
+                                </svg>
+                                <div class="mt-2">
+                                    <span class="badge bg-success px-3 py-1">90° Orientation</span>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <h6 class="mb-2 text-success">When to use 90° orientation:</h6>
+                                <ul class="small">
+                                    <li>Irregular room shapes with diagonal walls</li>
+                                    <li>To create visual interest in large open spaces</li>
+                                    <li>When optimizing for fewer cut pieces along edges</li>
+                                    <li>For transitioning between different areas</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-success mt-3 d-none" id="successAlert">
+            <strong>Success!</strong> Orientations have been saved.
+        </div>
+
+        <div class="alert alert-danger mt-3 d-none" id="errorAlert"></div>
+    </div>
+</div>
+
+<!-- Hidden apartments data that will be used by JavaScript -->
+<div id="apartments-data" style="display: none;">{{ apartments_json|safe }}</div>
+
+<!-- Hidden saved orientations data (if available) -->
+{% if saved_orientations_json %}
+<div id="saved-orientations" style="display: none;">{{ saved_orientations_json|safe }}</div>
+{% endif %}
+{% endblock %}
+
+{% block prev_step %}
+<a href="{{ url_for('step2') }}" class="btn btn-secondary">Previous: Name Rooms</a>
+{% endblock %}
+
+{% block next_step %}
+<a id="nextStep" href="{{ url_for('step4') }}" class="btn btn-primary disabled">Next: Tile Coverage</a>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const orientationForm = document.getElementById('orientationForm');
+    const saveButton = document.getElementById('saveButton');
+    const saveSpinner = document.getElementById('saveSpinner');
+    const successAlert = document.getElementById('successAlert');
+    const errorAlert = document.getElementById('errorAlert');
+    const nextStep = document.getElementById('nextStep');
+    const apartmentsList = document.getElementById('apartmentOrientationList');
+    const previewTable = document.getElementById('previewTable');
+    
+    // Track orientation states for all apartments
+    const orientationState = new Map();
+    
+    // Get apartments data from the hidden div
+    let apartments = [];
+    try {
+        const apartmentsData = document.getElementById('apartments-data').textContent;
+        apartments = JSON.parse(apartmentsData);
+        
+        // Initialize orientation state with default values
+        apartments.forEach(apartment => {
+            orientationState.set(apartment.apartment_name, {
+                value: 0,
+                saved: false
+            });
+        });
+    } catch (e) {
+        console.error('Error parsing apartments data:', e);
+        errorAlert.textContent = 'Error loading apartments data';
+        errorAlert.classList.remove('d-none');
+    }
+    
+    // Helper function to update all visual elements for a specific apartment
+    function updateApartmentVisuals(apartmentName, orientation, isSaved = false) {
+        // Update state
+        orientationState.set(apartmentName, {
+            value: parseInt(orientation),
+            saved: isSaved
+        });
+        
+        // Update preview boxes visibility and badge
+        document.querySelectorAll(`.preview-box[data-apartment="${apartmentName}"]`).forEach(preview => {
+            preview.classList.remove('active');
+        });
+        const activePreview = document.querySelector(`.preview-${orientation}[data-apartment="${apartmentName}"]`);
+        if (activePreview) {
+            activePreview.classList.add('active');
+        }
+        
+        // Update badge
+        const badge = document.querySelector(`#previewTable tr[data-apartment="${apartmentName}"] .orientation-badge`);
+        if (badge) {
+            badge.textContent = orientation + '°';
+            badge.className = 'orientation-badge badge';
+            badge.classList.add(parseInt(orientation) === 0 ? 'bg-primary' : 'bg-success');
+            
+            if (isSaved) {
+                const savedIcon = document.querySelector(`#previewTable tr[data-apartment="${apartmentName}"] .saved-icon`);
+                if (savedIcon) {
+                    savedIcon.classList.remove('d-none');
+                }
+            }
+        }
+        
+        // Update radio button selection
+        const radioButton = document.querySelector(`input[name="orientation_${apartmentName.replace(/\s+/g, '_')}"][value="${orientation}"]`);
+        if (radioButton) {
+            radioButton.checked = true;
+        }
+    }
+    
+    // Populate the tables with apartments
+    function populateApartmentsTable() {
+        apartmentsList.innerHTML = '';
+        previewTable.innerHTML = '';
+        
+        apartments.forEach(apartment => {
+            const apartmentName = apartment.apartment_name;
+            const savedState = orientationState.get(apartmentName);
+            const currentOrientation = savedState ? savedState.value : 0;
+            const isSaved = savedState ? savedState.saved : false;
+            
+            // Add to orientation selection table
+            const orientationRow = document.createElement('tr');
+            orientationRow.innerHTML = `
+                <td>${apartmentName}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="orientation_${apartmentName.replace(/\s+/g, '_')}" id="orientation0_${apartmentName.replace(/\s+/g, '_')}" value="0" ${currentOrientation === 0 ? 'checked' : ''}>
+                        <label class="btn btn-outline-primary" for="orientation0_${apartmentName.replace(/\s+/g, '_')}">0°</label>
+                        
+                        <input type="radio" class="btn-check" name="orientation_${apartmentName.replace(/\s+/g, '_')}" id="orientation90_${apartmentName.replace(/\s+/g, '_')}" value="90" ${currentOrientation === 90 ? 'checked' : ''}>
+                        <label class="btn btn-outline-success" for="orientation90_${apartmentName.replace(/\s+/g, '_')}">90°</label>
+                    </div>
+                </td>
+            `;
+            apartmentsList.appendChild(orientationRow);
+            
+            // Add to preview table
+            const previewRow = document.createElement('tr');
+            previewRow.setAttribute('data-apartment', apartmentName);
+            previewRow.innerHTML = `
+                <td>${apartmentName}</td>
+                <td>
+                    <div class="orientation-preview">
+                        <div class="preview-box preview-0 ${currentOrientation === 0 ? 'active' : ''}" data-apartment="${apartmentName}">
+                            <svg width="60" height="60" viewBox="0 0 100 100">
+                                <rect x="10" y="10" width="80" height="80" fill="#f8f9fa" stroke="#000" stroke-width="2"/>
+                                <rect x="20" y="20" width="30" height="30" fill="#007bff" stroke="#000" stroke-width="1"/>
+                                <rect x="55" y="20" width="30" height="30" fill="#007bff" stroke="#000" stroke-width="1"/>
+                                <rect x="20" y="55" width="30" height="30" fill="#007bff" stroke="#000" stroke-width="1"/>
+                                <rect x="55" y="55" width="30" height="30" fill="#007bff" stroke="#000" stroke-width="1"/>
+                            </svg>
+                        </div>
+                        <div class="preview-box preview-90 ${currentOrientation === 90 ? 'active' : ''}" data-apartment="${apartmentName}">
+                            <svg width="60" height="60" viewBox="0 0 100 100">
+                                <rect x="10" y="10" width="80" height="80" fill="#f8f9fa" stroke="#000" stroke-width="2"/>
+                                <rect x="20" y="20" width="30" height="30" fill="#28a745" stroke="#000" stroke-width="1" transform="rotate(90, 35, 35)"/>
+                                <rect x="55" y="20" width="30" height="30" fill="#28a745" stroke="#000" stroke-width="1" transform="rotate(90, 70, 35)"/>
+                                <rect x="20" y="55" width="30" height="30" fill="#28a745" stroke="#000" stroke-width="1" transform="rotate(90, 35, 70)"/>
+                                <rect x="55" y="55" width="30" height="30" fill="#28a745" stroke="#000" stroke-width="1" transform="rotate(90, 70, 70)"/>
+                            </svg>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-center">
+                    <span class="orientation-badge badge ${currentOrientation === 0 ? 'bg-primary' : 'bg-success'}">${currentOrientation}°</span>
+                    <i class="bi bi-check-circle-fill text-success ms-2 ${isSaved ? '' : 'd-none'} saved-icon"></i>
+                </td>
+            `;
+            previewTable.appendChild(previewRow);
+        });
+    }
+    
+    // Call the function to populate the table
+    populateApartmentsTable();
+    
+    // Add event listeners for orientation radio buttons
+    document.addEventListener('change', function(e) {
+        if (e.target.type === 'radio' && e.target.name.startsWith('orientation_')) {
+            const apartmentName = e.target.name.replace('orientation_', '').replace(/_/g, ' ');
+            updateApartmentVisuals(apartmentName, e.target.value);
+        }
+    });
+    
+    // Add event listeners for the form submission
+    orientationForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Show processing indicators
+        saveButton.disabled = true;
+        saveSpinner.classList.remove('d-none');
+        errorAlert.classList.add('d-none');
+        successAlert.classList.add('d-none');
+        
+        // Gather orientation data
+        const orientations = [];
+        
+        apartments.forEach(apartment => {
+            const radios = document.getElementsByName(`orientation_${apartment.apartment_name.replace(/\s+/g, '_')}`);
+            for (const radio of radios) {
+                if (radio.checked) {
+                    orientations.push({
+                        apartment_name: apartment.apartment_name,
+                        orientation: parseInt(radio.value)
+                    });
+                    break;
+                }
+            }
+        });
+        
+        // Send data to server
+        fetch('/step3', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ orientations: orientations })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide processing indicators
+            saveButton.disabled = false;
+            saveSpinner.classList.add('d-none');
+            
+            if (data.error) {
+                // Show error
+                errorAlert.textContent = data.error;
+                errorAlert.classList.remove('d-none');
+            } else {
+                // Show success
+                successAlert.textContent = `Success! Orientations have been saved for ${orientations.length} apartments.`;
+                successAlert.classList.remove('d-none');
+                
+                // Mark all apartments as saved
+                orientations.forEach(item => {
+                    updateApartmentVisuals(item.apartment_name, item.orientation, true);
+                });
+                
+                // Enable next step
+                nextStep.classList.remove('disabled');
+                
+                // Scroll to success message
+                successAlert.scrollIntoView({ behavior: 'smooth' });
+            }
+        })
+        .catch(error => {
+            // Hide processing indicators
+            saveButton.disabled = false;
+            saveSpinner.classList.add('d-none');
+            
+            // Show error
+            errorAlert.textContent = 'An error occurred: ' + error.message;
+            errorAlert.classList.remove('d-none');
+        });
+    });
+    
+    // Initialize from saved data (if available)
+    function initFromSavedData() {
+        const savedOrientationsElement = document.getElementById('saved-orientations');
+        if (savedOrientationsElement) {
+            try {
+                const savedOrientations = JSON.parse(savedOrientationsElement.textContent);
+                if (Array.isArray(savedOrientations) && savedOrientations.length > 0) {
+                    savedOrientations.forEach(item => {
+                        if (item.apartment_name && item.orientation !== undefined) {
+                            updateApartmentVisuals(item.apartment_name, item.orientation, true);
+                        }
+                    });
+                    nextStep.classList.remove('disabled');
+                }
+            } catch (e) {
+                console.error('Error parsing saved orientations:', e);
+            }
+        }
+    }
+    
+    // Try to initialize from saved data
+    initFromSavedData();
+});
+</script>
+<style>
+    .orientation-preview {
+        position: relative;
+        width: 60px;
+        height: 60px;
+        margin: 0 auto;
+    }
+    .preview-box {
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .preview-box.active {
+        opacity: 1;
+    }
+    .alert-success:not(.d-none) {
+        animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}

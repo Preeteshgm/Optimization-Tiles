@@ -44,8 +44,14 @@ app.secret_key = 'your_secret_key'
 app.json_encoder = NumpyEncoder
 
 # Configure server-side sessions
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_FILE_DIR'] = os.path.join(tempfile.gettempdir(), 'flask_session')
+import os
+if os.environ.get('VERCEL_ENV'):
+    app.config['SESSION_TYPE'] = 'cookie'  # Use cookie-based sessions in production
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_secret_key')  # Set via Vercel env vars
+else:
+    app.config['SESSION_TYPE'] = 'filesystem'  # Use filesystem in development
+    app.config['SESSION_FILE_DIR'] = os.path.join(tempfile.gettempdir(), 'flask_session')
+
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 Session(app)  # Initialize the session extension

@@ -1,0 +1,7 @@
+__pycache__/
+venv/
+logs/
+Tile_Matching_Reports_*/
+*.dxf
+exports/
+.git/

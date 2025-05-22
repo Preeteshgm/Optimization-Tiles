@@ -1022,8 +1022,8 @@ def optimize_tile_classification(apartments_data, final_room_df, has_pattern=Fal
                 expected_width = actual_width
                 expected_height = actual_height
             
-            # Classification tolerance (1%)
-            tolerance = 0.01
+            # Classification tolerance (2% for better capture of cut tiles)
+            tolerance = 0.02  # Increased from 0.01 to 0.02
             
             # Check if the tile is full-sized in either dimension
             width_ratio = measured_width / expected_width if expected_width > 0 else 0
@@ -1088,17 +1088,26 @@ def optimize_tile_classification(apartments_data, final_room_df, has_pattern=Fal
                             cut_side = round(measured_height)
             else:
                 # No pattern: all cuts in one list
-                classification = 'all_cut'
-                
-                if is_full_width:
-                    # Cut in height (Y direction)
-                    cut_side = round(measured_height)
-                elif is_full_height:
-                    # Cut in width (X direction)
-                    cut_side = round(measured_width)
+                # FIXED: More inclusive logic for all_cut classification
+                if not (is_full_width and is_full_height):
+                    # Any tile that's not both full width AND full height is a cut tile
+                    classification = 'all_cut'
+                    
+                    # Determine cut dimension based on which dimension is cut
+                    if is_full_width and not is_full_height:
+                        # Cut in height (Y direction)
+                        cut_side = round(measured_height)
+                    elif is_full_height and not is_full_width:
+                        # Cut in width (X direction)
+                        cut_side = round(measured_width)
+                    else:
+                        # Cut in both directions - use the smaller dimension as the cut
+                        # This represents the limiting dimension that defines the usable piece
+                        cut_side = min(round(measured_width), round(measured_height))
                 else:
-                    # Cut in both directions - use the larger dimension
-                    cut_side = max(round(measured_width), round(measured_height))
+                    # This should not happen as we already checked for full tiles above
+                    classification = 'full'
+                    cut_side = None
             
             # Store all tile data
             all_tiles.append({
@@ -1186,6 +1195,23 @@ def optimize_tile_classification(apartments_data, final_room_df, has_pattern=Fal
         'has_pattern': has_pattern
     }
     
+    # Debug output for no-pattern mode
+    if not has_pattern:
+        print(f"\n📊 No-Pattern Classification Debug:")
+        print(f"  Total tiles: {len(tiles_df)}")
+        print(f"  Full tiles: {len(full_tiles)}")
+        print(f"  All cut tiles: {len(all_cut_tiles)}")
+        print(f"  Irregular tiles: {len(irregular_tiles)}")
+        
+        # Show some examples of all_cut tiles
+        if not all_cut_tiles.empty:
+            print(f"  Sample all_cut tiles:")
+            for idx, (_, tile) in enumerate(all_cut_tiles.head(3).iterrows()):
+                print(f"    {idx+1}. Apt: {tile['apartment_name']}, Room: {tile['room_name']}, "
+                      f"Measured: {tile['measured_width']:.1f}x{tile['measured_height']:.1f}, "
+                      f"Expected: {tile['actual_width']:.1f}x{tile['actual_height']:.1f}, "
+                      f"Cut side: {tile['cut_side']}")
+    
     # The following dataframes would be generated for export in a real implementation
     # but we don't need them for web display
     cut_x_df = pd.DataFrame()
@@ -1193,6 +1219,63 @@ def optimize_tile_classification(apartments_data, final_room_df, has_pattern=Fal
     all_cut_df = pd.DataFrame()
     
     return tiles_df, full_tiles, irregular_tiles, cut_x_tiles, cut_y_tiles, all_cut_tiles, cut_x_df, cut_y_df, all_cut_df, stats
+
+def debug_tile_classification(tiles_df, has_pattern=False):
+    """
+    Debug function to analyze tile classification results
+    """
+    print(f"\n🔍 CLASSIFICATION DEBUG REPORT:")
+    print(f"Pattern mode: {has_pattern}")
+    print(f"Total tiles analyzed: {len(tiles_df)}")
+    
+    # Classification breakdown
+    classification_counts = tiles_df['classification'].value_counts()
+    print(f"\nClassification breakdown:")
+    for classification, count in classification_counts.items():
+        percentage = (count / len(tiles_df)) * 100
+        print(f"  {classification}: {count} ({percentage:.1f}%)")
+    
+    # For no-pattern mode, show detailed all_cut analysis
+    if not has_pattern and 'all_cut' in classification_counts:
+        all_cut_tiles = tiles_df[tiles_df['classification'] == 'all_cut']
+        
+        print(f"\n📏 All-Cut Tiles Analysis:")
+        print(f"  Total all-cut tiles: {len(all_cut_tiles)}")
+        
+        # Group by cut dimension
+        cut_dimensions = all_cut_tiles['cut_side'].value_counts().sort_index()
+        print(f"  Cut dimensions distribution:")
+        for dim, count in cut_dimensions.items():
+            print(f"    {dim}mm: {count} tiles")
+        
+        # Show tiles that might have been missed (full dimensions but classified as cut)
+        print(f"\n🔍 Sample all-cut tiles (first 5):")
+        for idx, (_, tile) in enumerate(all_cut_tiles.head(5).iterrows()):
+            width_ratio = tile['measured_width'] / tile['actual_width'] if tile['actual_width'] > 0 else 0
+            height_ratio = tile['measured_height'] / tile['actual_height'] if tile['actual_height'] > 0 else 0
+            
+            print(f"    {idx+1}. {tile['apartment_name']}-{tile['room_name']}")
+            print(f"       Measured: {tile['measured_width']:.1f} x {tile['measured_height']:.1f}")
+            print(f"       Expected: {tile['actual_width']:.1f} x {tile['actual_height']:.1f}")
+            print(f"       Ratios: W={width_ratio:.3f}, H={height_ratio:.3f}")
+            print(f"       Cut side: {tile['cut_side']}mm")
+            print(f"       Full W: {tile['is_full_width']}, Full H: {tile['is_full_height']}")
+    
+    # Check for any tiles that might be misclassified
+    potential_issues = tiles_df[
+        (tiles_df['classification'] == 'full') & 
+        ((abs(tiles_df['measured_width'] - tiles_df['actual_width']) > 5) | 
+         (abs(tiles_df['measured_height'] - tiles_df['actual_height']) > 5))
+    ]
+    
+    if not potential_issues.empty:
+        print(f"\n⚠️  Potential classification issues ({len(potential_issues)} tiles):")
+        for idx, (_, tile) in enumerate(potential_issues.head(3).iterrows()):
+            print(f"    {idx+1}. {tile['apartment_name']}-{tile['room_name']} classified as '{tile['classification']}'")
+            print(f"       Measured: {tile['measured_width']:.1f} x {tile['measured_height']:.1f}")
+            print(f"       Expected: {tile['actual_width']:.1f} x {tile['actual_height']:.1f}")
+    
+    return classification_counts
 
 def visualize_classification(tiles_df, final_room_df, has_pattern=False, with_grout=True):
     """Optimized visualization of classified tiles"""
